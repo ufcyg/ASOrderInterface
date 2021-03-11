@@ -37,6 +37,8 @@ class OrderInterfaceUtils
     private $mailServiceHelper;
     /** @var string $folderRoot */
     private $folderRoot;
+    /** @var string $folderRoot */
+    private $senderName;
     /** @var ContainerInterface $container */
     protected $container;
     
@@ -45,6 +47,7 @@ class OrderInterfaceUtils
     {
         $this->systemConfigService = $systemConfigService;
         $this->mailServiceHelper = $mailServiceHelper;
+        $this->senderName = 'Order Interface';
         $this->folderRoot = $this->systemConfigService->get('ASOrderInterface.config.workingDirectory');
     }
     
