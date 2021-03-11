@@ -8,7 +8,7 @@ class ScheduledOrderProcessStockFeedbackTask extends ScheduledTask
 {
     public static function getTaskName(): string
     {
-        return 'synlab.scheduled_order_process_stock_feedback';
+        return 'as.scheduled_order_process_stock_feedback';
     }
 
     public static function getDefaultInterval(): int

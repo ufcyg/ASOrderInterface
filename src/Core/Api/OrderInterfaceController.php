@@ -88,7 +88,7 @@ class OrderInterfaceController extends AbstractController
     }
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/dummyRoute", name="api.custom.synlab_order_interface.dummyRoute", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/dummyRoute", name="api.custom.as_order_interface.dummyRoute", methods={"POST"})
      * @param Context $context;
      * @return Response
      * just my debug function called by insomnia, change what you want, it isn't used anywhere
@@ -100,7 +100,7 @@ class OrderInterfaceController extends AbstractController
     }
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/processAnswers", name="api.custom.synlab_order_interface.processAnswers", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/processAnswers", name="api.custom.as_order_interface.processAnswers", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Checks for answers by logistics partner.
@@ -115,7 +115,7 @@ class OrderInterfaceController extends AbstractController
     }
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/submitArticlebase", name="api.custom.synlab_order_interface.submitArticlebase", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/submitArticlebase", name="api.custom.as_order_interface.submitArticlebase", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Writes file with full articlebase local and transmits the file to the designated sFTP server.
@@ -144,7 +144,7 @@ class OrderInterfaceController extends AbstractController
     }
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/submitOrders", name="api.custom.synlab_order_interface.submitOrders", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/submitOrders", name="api.custom.as_order_interface.submitOrders", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Checks for open orders and transmits them to the designated sFTP server
@@ -231,7 +231,7 @@ class OrderInterfaceController extends AbstractController
     }
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/pullRMWA", name="api.custom.synlab_order_interface.pullRMWA", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/pullRMWA", name="api.custom.as_order_interface.pullRMWA", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Pulls feedback about goods dispatchment from logistics partner
@@ -247,7 +247,7 @@ class OrderInterfaceController extends AbstractController
         return $this->checkRMWA($context);
     }
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/checkRMWA", name="api.custom.synlab_order_interface.checkRMWA", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/checkRMWA", name="api.custom.as_order_interface.checkRMWA", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Processes pulled feedback about goods dispatchment from logistics partner
@@ -451,7 +451,7 @@ class OrderInterfaceController extends AbstractController
     
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/pullRMWE", name="api.custom.synlab_order_interface.pullRMWE", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/pullRMWE", name="api.custom.as_order_interface.pullRMWE", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Pulls feedback about goods receipt from logistics partner
@@ -467,7 +467,7 @@ class OrderInterfaceController extends AbstractController
         return $this->checkRMWE($context);
     }
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/checkRMWE", name="api.custom.synlab_order_interface.checkRMWE", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/checkRMWE", name="api.custom.as_order_interface.checkRMWE", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Processes pulled feedback about goods receipt from logistics partner
@@ -649,7 +649,7 @@ class OrderInterfaceController extends AbstractController
     }
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/pullArticleError", name="api.custom.synlab_order_interface.pullArticleError", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/pullArticleError", name="api.custom.as_order_interface.pullArticleError", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Pulls the article error response from remote sFTP server
@@ -665,7 +665,7 @@ class OrderInterfaceController extends AbstractController
         return $this->checkArticleError($context);
     }
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/checkArticleError", name="api.custom.synlab_order_interface.checkArticleError", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/checkArticleError", name="api.custom.as_order_interface.checkArticleError", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Checks pulled article error response, iterates through them and send a notification eMail to administration
@@ -689,7 +689,7 @@ class OrderInterfaceController extends AbstractController
         return new Response('',Response::HTTP_NO_CONTENT);
     }
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/pullBestand", name="api.custom.synlab_order_interface.pullBestand", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/pullBestand", name="api.custom.as_order_interface.pullBestand", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Pulls the stock report from remote sFTP server
@@ -705,7 +705,7 @@ class OrderInterfaceController extends AbstractController
         return $this->checkBestand($context);
     }
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/checkBestand", name="api.custom.synlab_order_interface.checkBestand", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/checkBestand", name="api.custom.as_order_interface.checkBestand", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Processes pulled stock report
@@ -1139,7 +1139,7 @@ class OrderInterfaceController extends AbstractController
     }
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/modifyOrdersState", name="api.custom.synlab_order_interface.modifyOrdersState", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/modifyOrdersState", name="api.custom.as_order_interface.modifyOrdersState", methods={"POST"})
      * @param Context $context;
      * @return Response
      */
@@ -1229,7 +1229,7 @@ class OrderInterfaceController extends AbstractController
     }
 
     /**
-     * @Route("/api/v{version}/_action/synlab-order-interface/healthPing", name="api.custom.synlab_order_interface.healthPing", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/healthPing", name="api.custom.as_order_interface.healthPing", methods={"POST"})
      * @param Context $context;
      * @return Response
      */
@@ -1257,15 +1257,15 @@ class OrderInterfaceController extends AbstractController
     }
     private function isMyScheduledTaskCk(string $taskName): bool
     {
-        if($taskName == 'synlab.scheduled_order_transfer_task')
+        if($taskName == 'as.scheduled_order_transfer_task')
             return true;
-        if($taskName == 'synlab.scheduled_order_process_article_error')
+        if($taskName == 'as.scheduled_order_process_article_error')
             return true;
-        if($taskName == 'synlab.scheduled_order_process_rmwa')
+        if($taskName == 'as.scheduled_order_process_rmwa')
             return true;
-        if($taskName == 'synlab.scheduled_order_process_rmwe')
+        if($taskName == 'as.scheduled_order_process_rmwe')
             return true;
-        if($taskName == 'synlab.scheduled_order_process_stock_feedback')
+        if($taskName == 'as.scheduled_order_process_stock_feedback')
             return true;
     
         return false;

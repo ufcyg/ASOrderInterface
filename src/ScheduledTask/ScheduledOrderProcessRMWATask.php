@@ -8,7 +8,7 @@ class ScheduledOrderProcessRMWATask extends ScheduledTask
 {
     public static function getTaskName(): string
     {
-        return 'synlab.scheduled_order_process_rmwa';
+        return 'as.scheduled_order_process_rmwa';
     }
 
     public static function getDefaultInterval(): int

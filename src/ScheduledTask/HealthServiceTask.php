@@ -8,7 +8,7 @@ class HealthServiceTask extends ScheduledTask
 {
     public static function getTaskName(): string
     {
-        return 'synlab.health_service_task';
+        return 'as.health_service_task';
     }
 
     public static function getDefaultInterval(): int

@@ -8,7 +8,7 @@ class ScheduledOrderProcessArticleErrorTask extends ScheduledTask
 {
     public static function getTaskName(): string
     {
-        return 'synlab.scheduled_order_process_article_error';
+        return 'as.scheduled_order_process_article_error';
     }
 
     public static function getDefaultInterval(): int

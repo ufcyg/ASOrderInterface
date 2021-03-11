@@ -8,7 +8,7 @@ class ScheduledOrderTransferTask extends ScheduledTask
 {
     public static function getTaskName(): string
     {
-        return 'synlab.scheduled_order_transfer_task';
+        return 'as.scheduled_order_transfer_task';
     }
 
     public static function getDefaultInterval(): int
