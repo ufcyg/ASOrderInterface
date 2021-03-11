@@ -1,7 +1,7 @@
 {
   "name": "as/order-interface",
   "description": "Interface orders with Rieck",
-  "version": "v0.9.32",
+  "version": "v0.9.33",
   "type": "shopware-platform-plugin",
   "license": "proprietary",
   "authors": [
