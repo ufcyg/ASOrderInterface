@@ -1,0 +1,26 @@
+{
+    "as-order-interface": {
+      "general": {
+        "mainMenuItemGeneral": "Disposition Control",
+        "descriptionTextModule": "Monitoring Stock and Supply",
+        "columnNotificationsActivated": "Notifications activated",
+        "columnProductID": "Productname",
+        "columnProductNumber": "Productnumber",
+        "columnStock": "Stock",
+        "columnCommissioned": "Commissioned",
+        "columnStockAvailable": "Available Stock",
+        "columnIncoming": "Open order volume",
+        "columnMinimumThreshold": "Minimum Stock",
+        "columnNotificationThreshold": "Reorder point",
+        "uploadWhitelist": "uploadButton"
+      },
+      "errors": {
+        "creation": "Creation Error (eng)"
+      },
+      "detail":{
+        "saveButtonText": "SaveButton",
+        "cancelButtonText": "CancelButton"
+      }
+    }
+  }
+  

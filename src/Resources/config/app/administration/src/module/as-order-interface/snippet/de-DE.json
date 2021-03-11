@@ -1,0 +1,26 @@
+{
+    "as-order-interface": {
+      "general": {
+        "mainMenuItemGeneral": "Dispositions Kontrolle",
+        "descriptionTextModule": "Verwalten von Bestand und Bestellungen",
+        "columnNotificationsActivated": "Benachrichtigungen aktiv",
+        "columnProductID": "Produkt Name",
+        "columnProductNumber": "Produkt Nummer",
+        "columnStock": "Bestand",
+        "columnCommissioned": "In Kommissionierung",
+        "columnStockAvailable": "Verfügbarer Bestand",
+        "columnIncoming": "Offene Bestellungen",
+        "columnMinimumThreshold": "Sicherheitsbestand",
+        "columnNotificationThreshold": "Meldebestand",
+        "uploadWhitelist": "uploadButton"
+      },
+      "errors": {
+        "creation": "Creation Error (deu)"
+      },
+      "detail":{
+        "saveButtonText": "SpeichernButton",
+        "cancelButtonText": "AbbrechenButton"
+      }
+    }
+  }
+  

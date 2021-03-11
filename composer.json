@@ -1,0 +1,28 @@
+{
+  "name": "as/order-interface",
+  "description": "Interface orders with Rieck",
+  "version": "v0.9.32",
+  "type": "shopware-platform-plugin",
+  "license": "proprietary",
+  "authors": [
+    {
+        "name": "SGS IT"
+    }
+  ],
+  "require": {
+    "as/disposition-control": "*.*.*",
+    "as/mail-service": "*.*.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "ASOrderInterface\\": "src/"
+    }
+  },
+  "extra": {
+    "shopware-plugin-class": "ASOrderInterface\\ASOrderInterface",
+    "label": {
+      "de-DE": "OrderInterface",
+      "en-GB": "OrderInterface"
+    }
+  }
+}

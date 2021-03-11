@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/master/src/Core/System/SystemConfig/Schema/config.xsd">
+    
+    <card>
+        <title>Connection Info</title>
+        <input-field>
+            <name>ipAddress</name>
+            <label>Remote FTP-Server Address</label>
+            <label lang="de-DE">Adresse des entfernten FTP-Servers</label>          
+            <placeholder>0.0.0.0</placeholder>
+            <placeholder lang="de-DE">0.0.0.0</placeholder>
+            <helpText>Input a valid ip address without port</helpText>
+            <helpText lang="de-DE">Geben Sie eine valide IP-Adresse ohne Port ein.</helpText>
+        </input-field>
+
+        <input-field>
+            <name>homeDirectory</name>
+            <label>Remote FTP-Server Home Directory</label>
+            <label lang="de-DE">Startordner des entfernten FTP-Servers</label>          
+            <placeholder>/home/directory/</placeholder>
+            <placeholder lang="de-DE">/home/directory/</placeholder>
+            <helpText>Input the home directory of your ftp server</helpText>
+            <helpText lang="de-DE">Geben Sie den Startordner ihres ftp-Servers an.</helpText>
+        </input-field>
+
+        <input-field>
+            <name>port</name>
+            <label>Port to use for connection</label>
+            <label lang="de-DE">Port für die Verbindung</label>          
+            <placeholder>21</placeholder>
+            <placeholder lang="de-DE">21</placeholder>
+            <helpText>Input the used port, if left empty default (21) is used.</helpText>
+            <helpText lang="de-DE">Geben Sie den zu verwendenden Port ein, falls frei wird der Standard (21) Port verwendet.</helpText>
+        </input-field>
+
+        <input-field type="password">
+            <name>logisticsCustomerID</name>
+            <label>LogisticsCustomerID</label>
+            <label lang="de-DE">KundenkennungLogistik</label>          
+            <placeholder>LogisticsCustomerID</placeholder>
+            <placeholder lang="de-DE">KundenkennungLogistik</placeholder>
+            <helpText>Input your customer ID at the corresponding logistics company.</helpText>
+            <helpText lang="de-DE">Geben Sie ihre Kundennummer beim Logistikpartner ein.</helpText>
+        </input-field>
+
+        <input-field>
+            <name>ftpUserName</name>
+            <label>FTP username</label>
+            <label lang="de-DE">FTP Benutzername</label>          
+            <placeholder>username</placeholder>
+            <placeholder lang="de-DE">Benutzername</placeholder>
+            <helpText>Input your username for target FTP-Server</helpText>
+            <helpText lang="de-DE">Geben Sie den Nutzernamen für den Ziel FTP-Server ein.</helpText>
+        </input-field>
+
+        <input-field type="password">
+            <name>ftpPassword</name>
+            <label>FTP Password</label>
+            <label lang="de-DE">FTP Passwort</label>          
+            <placeholder>password</placeholder>
+            <placeholder lang="de-DE">Passwort</placeholder>
+            <helpText>Input the matching password for given username.</helpText>
+            <helpText lang="de-DE">Geben Sie das dem Nutzernamen entsprechende Passwort ein.</helpText>
+        </input-field>
+    </card>
+    <card>
+        <title>Notification settings</title>
+        <input-field type="bool">
+            <name>deleteFilesAfterEvaluation</name>
+            <label>Delete transmitted files after evaluation</label>
+            <label lang="de-DE">Löschen übermittelter Daten nach der Auswertung</label>
+            <helpText>If toggled, files pulled from the logistic partner will be deleted after evaluation if no error occures.</helpText>
+            <helpText lang="de-DE">Falls aktiviert werden übermittelte Daten nach der Auswertung, sofern kein Fehler aufgetreten ist, gelöscht.</helpText>
+        </input-field>
+
+        <input-field>
+            <name>errorNotificationRecipients</name>
+            <label>Name and Mail of recipients of error notifications</label>
+            <label lang="de-DE">Name und Mailadresse der Empfänger von Fehlermeldungen</label>          
+            <placeholder>John Doe;john.doe@john.doe</placeholder>
+            <placeholder lang="de-DE">Max Mustermann;mustermann@muster.man</placeholder>
+            <helpText>Input as many recipients as needed in valid formation: NAME DELIMITER(;) MAIL</helpText>
+            <helpText lang="de-DE">Geben Sie beliebig viele Empfänger für Fehlerbenachrichtigungen in valider Form ein: NAME TRENNZEICHEN(;) MAILADRESSE.</helpText>
+        </input-field>
+
+        <component name="sw-entity-single-select">
+            <name>fallbackSaleschannelNotification</name>
+            <entity>sales_channel</entity>
+            <label>Choose a fallback sales channel as origin for notifications if no other sales channel is known</label>
+        </component>
+    </card>
+    <card>
+        <title>Working Directory</title>
+        <input-field>
+            <name>workingDirectory</name>
+            <label>Enter the working directory here</label>
+            <label lang="de-DE">Tragen Sie hier das Arbeitsverzeichnis ein</label>          
+            <placeholder>/home/www/b90/server81login-server/_zpmv-pmo.de/public/</placeholder>
+            <helpText>Full path of the public folder in your shopware installation</helpText>
+            <helpText lang="de-DE">Vollständigen Pfad zum public Ordner Ihrer Shopware installation</helpText>
+        </input-field>
+    </card>
+</config>

@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="ASOrderInterface\Core\Api\Utilities\CSVFactory" public="true">    
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />  
+            <argument id="ASOrderInterface\Core\Api\Utilities\OrderInterfaceUtils" type="service"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container" />
+            </call>
+        </service>
+
+        <service id="ASOrderInterface\Core\Api\Utilities\OrderInterfaceUtils" public="true">    
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />  
+            <call method="setContainer">
+                <argument type="service" id="service_container" />
+            </call>
+        </service>
+
+        <service id="ASOrderInterface\Core\Api\Utilities\SFTPController" public="true">    
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />  
+        </service>
+
+        <service id="ASOrderInterface\Core\Content\CancelledConfirmation\OrderInterfaceCancelConfirmationDefinition">
+            <tag name="shopware.entity.definition" entity="as_cancelled_confirmation" />
+        </service>
+        <service id="ASOrderInterface\Core\Content\StockQS\OrderInterfaceStockQSDefinition">
+            <tag name="shopware.entity.definition" entity="as_stock_qs" />
+        </service>
+
+        <service id="ASOrderInterface\Core\Api\Utilities\OIOrderServiceUtils" public="true">      
+            <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderService" />
+        </service>
+
+        <service id="ASOrderInterface\Core\Api\OrderInterfaceController" public="true">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\CSVFactory" />
+            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\OrderInterfaceUtils" />
+            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\OIOrderServiceUtils" />
+            <argument type="service" id="ASMailService\Core\MailServiceHelper" />
+            <argument type="service" id="ASControllingReport\Core\Api\ASControllingReportController" />
+            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\SFTPController" />
+            <call method="setContainer">
+                <argument type="service" id="service_container" />
+            </call>
+        </service>
+
+<!-- scheduled tasks -->
+<!-- orderTransfer -->
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderTransferTask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderTransferTaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
+            <tag name="messenger.message_handler" />
+        </service>
+<!-- healthPing -->
+        <service id="ASOrderInterface\ScheduledTask\HealthServiceTask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+        <service id="ASOrderInterface\ScheduledTask\HealthServiceTaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
+            <tag name="messenger.message_handler" />
+        </service>
+<!-- pullBestand -->
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderProcessStockFeedbackTask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderProcessStockFeedbackTaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
+            <tag name="messenger.message_handler" />
+        </service>
+<!-- pullArticleError -->
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderProcessArticleErrorTask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderProcessArticleErrorTaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
+            <tag name="messenger.message_handler" />
+        </service>
+<!-- pullRMWA -->
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderProcessRMWATask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderProcessRMWATaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
+            <tag name="messenger.message_handler" />
+        </service>
+<!-- pullRMWE -->
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderProcessRMWETask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+        <service id="ASOrderInterface\ScheduledTask\ScheduledOrderProcessRMWETaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
+            <tag name="messenger.message_handler" />
+        </service>
+        
+    </services>
+</container>

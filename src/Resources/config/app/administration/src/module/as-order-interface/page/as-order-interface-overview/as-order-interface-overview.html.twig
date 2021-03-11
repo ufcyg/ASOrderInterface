@@ -1,0 +1,23 @@
+{% block order_interface_overview %}
+    <sw-page class="disposition-control-list">
+        {% block swag_bundle_list_smart_bar_actions %}
+            <template slot="smart-bar-actions">
+                {# <sw-button variant="submit" >
+                    {{ $t('as-disposition-control.general.uploadWhitelist') }}
+                </sw-button> #}
+            </template>
+        {% endblock %}
+
+        <template slot="content">
+            {% block order_interface_list_content %}
+                <sw-entity-listing
+                    v-if="entries"
+                    :items="entries"
+                    :repository="repository"
+                    :showSelection="false"
+                    :columns="columns">
+                </sw-entity-listing>
+            {% endblock %}
+        </template>
+    </sw-page>
+{% endblock %}
