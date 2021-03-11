@@ -2,6 +2,7 @@
 
 namespace ASOrderInterface;
 
+use ASOrderInterface\Core\Api\OrderInterfaceController;
 use Doctrine\DBAL\Connection;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
 use Shopware\Core\Framework\Plugin\Context\InstallContext;
@@ -100,6 +101,9 @@ class ASOrderInterface extends Plugin
     /** @inheritDoc */
     public function activate(ActivateContext $activateContext): void
     {
+        /** @var OrderInterfaceController $orderInterfaceController */
+        $orderInterfaceController = $this->container->get('ASOrderInterface\Core\Api\OrderInterfaceController');
+        $orderInterfaceController->initStockQS($activateContext->getContext());
     }
 
     /** @inheritDoc */

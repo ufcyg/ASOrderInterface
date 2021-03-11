@@ -48,6 +48,13 @@
             </call>
         </service>
 
+        <service id="ASOrderInterface\Subscriber\ProductEventSubscriber">
+            <tag name="kernel.event_subscriber"/>
+            <tag name="shopware.event_subscriber"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
+        </service>
+
 <!-- scheduled tasks -->
 <!-- orderTransfer -->
         <service id="ASOrderInterface\ScheduledTask\ScheduledOrderTransferTask">

@@ -963,5 +963,52 @@ class OrderInterfaceController extends AbstractController
 
         return new Response('',Response::HTTP_NO_CONTENT);
     }
+
+    /**
+     * @Route("/api/v{version}/_action/as-order-interface/initStockQS", name="api.custom.as_order_interface.initStockQS", methods={"POST"})
+     * @param Context $context;
+     * @return Response
+     */
+    public function initStockQS(Context $context)
+    {
+        $stockQSRepository = $this->container->get('as_stock_qs.repository');
+        /** @var EntityRepositoryInterface $productsRepository */
+        $productsRepository = $this->container->get('product.repository');
+        $products = $productsRepository->search(new Criteria(),$context);
+        foreach($products as $productID => $product)
+        {
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsFilter('productId', $productID));
+            $searchResult = $stockQSRepository->search($criteria,$context);
+            if(count($searchResult) == 0)
+            {//add new entity because we havent found one
+                $data[] = [ 'productId' => $productID, 'faulty' => 0, 'clarification' => 0, 'postprocessing' => 0, 'other' => 0];
+            }
+        }
+        $stockQSRepository->create(
+            $data,
+            Context::createDefaultContext()
+        );
+        return new Response('',Response::HTTP_NO_CONTENT);
+    }
+    public function deleteStockQSEntry(string $productID, Context $context)
+    {
+        /** @var EntityRepositoryInterface $stockQSRepository */
+        $stockQSRepository = $this->container->get('as_stock_qs.repository');
+
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('productId', $productID));
+
+        $searchResult = $stockQSRepository->search($criteria,$context);
+        if(count($searchResult) > 0)
+        {
+            $entity = $searchResult->first();
+            $stockQSRepository->delete([
+                ['id' => $entity->getId()],
+            ],$context);
+        }
+
+        return new Response('',Response::HTTP_NO_CONTENT);
+    }
     
 }
