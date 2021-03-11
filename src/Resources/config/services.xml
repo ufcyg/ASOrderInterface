@@ -15,6 +15,7 @@
 
         <service id="ASOrderInterface\Core\Api\Utilities\OrderInterfaceUtils" public="true">    
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />  
+            <argument type="service" id="ASMailService\Core\MailServiceHelper" />
             <call method="setContainer">
                 <argument type="service" id="service_container" />
             </call>
@@ -40,7 +41,6 @@
             <argument type="service" id="ASOrderInterface\Core\Api\Utilities\CSVFactory" />
             <argument type="service" id="ASOrderInterface\Core\Api\Utilities\OrderInterfaceUtils" />
             <argument type="service" id="ASOrderInterface\Core\Api\Utilities\OIOrderServiceUtils" />
-            <argument type="service" id="ASMailService\Core\MailServiceHelper" />
             <argument type="service" id="ASControllingReport\Core\Api\ASControllingReportController" />
             <argument type="service" id="ASOrderInterface\Core\Api\Utilities\SFTPController" />
             <call method="setContainer">

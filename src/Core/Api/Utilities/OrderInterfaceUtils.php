@@ -8,6 +8,8 @@ OrderInterfaceUtils holds most helper functions for the order interface controll
 
 namespace ASOrderInterface\Core\Api\Utilities;
 
+use ASDispositionControl\Core\Content\DispoControlData\DispoControlDataEntity;
+use ASMailService\Core\MailServiceHelper;
 use Psr\Container\ContainerInterface;
 use DateInterval;
 use DateTime;
@@ -24,19 +26,25 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use ASOrderInterface\Core\Content\StockQS\OrderInterfaceStockQSEntity;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 class OrderInterfaceUtils
 {
     /** @var SystemConfigService $systemConfigService */
     private $systemConfigService;
+    /** @var MailServiceHelper $mailServiceHelper */
+    private $mailServiceHelper;
     /** @var string $folderRoot */
     private $folderRoot;
     /** @var ContainerInterface $container */
     protected $container;
     
-    public function __construct(SystemConfigService $systemConfigService)
+    public function __construct(SystemConfigService $systemConfigService,
+                                MailServiceHelper $mailServiceHelper)
     {
         $this->systemConfigService = $systemConfigService;
+        $this->mailServiceHelper = $mailServiceHelper;
         $this->folderRoot = $this->systemConfigService->get('ASOrderInterface.config.workingDirectory');
     }
     
@@ -299,5 +307,281 @@ class OrderInterfaceUtils
         return count($searchResult) != 0 ? true : false;
     }
 
+    /* Updates stock according to logistics partner response */
+    public function updateProduct(string $articleNumber, $stockAddition, $availableStockAddition, $context)
+    {
+        /** @var EntityRepositoryInterface $productRepository */
+        $productRepository = $this->container->get('product.repository');
+
+        /** @var ProductEntity $productEntity */
+        $productEntity = $this->getProduct($this->container->get('product.repository'), $articleNumber, $context);
+
+        $currentStock = $productEntity->getStock();
+        $currentStockAvailable = $productEntity->getAvailableStock();
+
+        $newStockValue = $currentStock + intval($availableStockAddition);
+        // $newAvailableStockValue = $currentStockAvailable + intval($availableStockAddition);
+
+        $productRepository->update(
+            [
+                [ 'id' => $productEntity->getId(), 'stock' => $newStockValue ],
+            ],
+            $context
+        );
+    }    
+
+    /* */
+    public function updateQSStock(array $lineContents, string $articleNumber, Context $context)
+    {
+        /** @var EntityRepositoryInterface $stockQSRepository */
+        $stockQSRepository = $this->container->get('as_stock_qs.repository');
+        /** @var EntityRepositoryInterface $productRepository */
+        $productRepository = $this->container->get('product.repository');
+        $product = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
+
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('productId',$product->getId()));
+
+        
+        /** @var EntitySearchResult $searchResult */
+        $searchResult = null;
+        
+        $searchResult = $stockQSRepository->search($criteria,$context);
+            
+        if(count($searchResult) == 0)
+        {
+            // generate new entry
+            $stockQSRepository->create([
+                ['productId' => $product->getId(), 'faulty' => intval($lineContents[8]), 'clarification' => intval($lineContents[9]), 'postprocessing' => intval($lineContents[10]), 'other' => intval($lineContents[11])],
+            ],
+                $context
+            );
+            return;
+        }
+        else
+        {
+            // update entry
+            $entry = $searchResult->first();
+
+            /** @var OrderInterfaceStockQSEntity $stockQSEntity */
+            $stockQSEntity = $searchResult->first();
+            $faulty = $stockQSEntity->getFaulty();
+            $clarification = $stockQSEntity->getClarification();
+            $postprocessing = $stockQSEntity->getPostprocessing();
+            $other = $stockQSEntity->getOther();
+            
+            $stockQSRepository->update([
+                ['id' => $entry->getId(), 'productId' => $product->getId(), 'faulty' => intval($lineContents[8]) + $faulty, 'clarification' => intval($lineContents[9]) + $clarification, 'postprocessing' => intval($lineContents[10]) + $postprocessing, 'other' => intval($lineContents[11]) + $other],
+            ],
+                $context
+            );
+        }
+    }
+
+    public function updateQSStockBS(int $faulty, int $postprocessing, int $other, int $clarification, string $articleNumber, Context $context)
+    {
+        /** @var EntityRepositoryInterface $productRepository */
+        $productRepository = $this->container->get('product.repository');
+        /** @var EntityRepositoryInterface $stockQSRepository */
+        $stockQSRepository = $this->container->get('as_stock_qs.repository');
+
+        $productEntity = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
+        $productID = $productEntity->getId();
+
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('productId',$productID));
+        
+        /** @var EntitySearchResult $searchResult */
+        $searchResult = null;
+        
+        $searchResult = $stockQSRepository->search($criteria,$context);
+        if(count($searchResult) == 0)
+        {
+            // generate new entry
+            $stockQSRepository->create([
+                ['productId' => $productID, 'faulty' => $faulty, 'clarification' => $clarification, 'postprocessing' => $postprocessing, 'other' => $other],
+            ], $context);
+            return;
+        }
+        else
+        {
+            // update entry
+            $entry = $searchResult->first();
+
+            /** @var OrderInterfaceStockQSEntity $stockQSEntity */
+            $stockQSEntity = $searchResult->first();
+            $currentFaulty = $stockQSEntity->getFaulty();
+            $currentClarification = $stockQSEntity->getClarification();
+            $currentPostprocessing = $stockQSEntity->getPostprocessing();
+            $currentOther = $stockQSEntity->getOther();
+            
+            $stockQSRepository->update([
+                ['id' => $entry->getId(), 'productId' => $productID, 'faulty' => $currentFaulty + $faulty, 'clarification' => $currentClarification + $clarification, 'postprocessing' => $currentPostprocessing + $postprocessing, 'other' => $currentOther + $other],
+            ],
+                $context
+            );
+        }
+    }
+
+    public function processQSK(string $articleNumber, int $faulty, int $clarification, int $postprocessing, int $other, int $stock ,Context $context)
+    {
+        /** @var EntityRepositoryInterface $stockQSRepository */
+        $stockQSRepository = $this->container->get('as_stock_qs.repository');
+        /** @var EntityRepositoryInterface $productRepository */
+        $productRepository = $this->container->get('product.repository');
+        /** @var ProductEntity $product */
+        $product = $this->oiUtils->getProduct($productRepository,$articleNumber,$context);
+        $productID = $product->getId();
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('productId',$productID));
+
+        $searchResult = null;
+        $searchResult = $stockQSRepository->search($criteria,$context);
+        
+
+        if(count($searchResult) == 0)
+        {
+            if($faulty < 0 || $clarification < 0 || $postprocessing < 0 || $other < 0)
+            {
+                $this->sendErrorNotification('QSK error','major error, check logs.<br>A new stock qs entry tried to be created with negative values.', ['']);
+                return;
+            }
+            $stockQSRepository->create([
+                ['productId' => $productID, 'faulty' => $faulty, 'clarification' => $clarification, 'postprocessing' => $postprocessing, 'other' => $other],
+            ], $context);
+        }
+        else
+        {
+            /** @var OrderInterfaceStockQSEntity $stockQSEntity */
+            $stockQSEntity = $searchResult->first();
+            $currentFaulty = $stockQSEntity->getFaulty();
+            $currentClarification = $stockQSEntity->getClarification();
+            $currentPostprocessing = $stockQSEntity->getPostprocessing();
+            $currentOther = $stockQSEntity->getOther();
+
+            $stockQSRepository->update([
+                ['id' => $stockQSEntity->getId(), 'faulty' => $currentFaulty + $faulty, 'clarification' => $currentClarification + $clarification, 'postprocessing' => $currentPostprocessing + $postprocessing, 'other' => $currentOther + $other],
+            ], $context);
+
+            
+
+            $currentStock = $product->getStock();
+            $newStockValue = $currentStock + $stock;
+            $productRepository->update(
+                [
+                    [ 'id' => $product->getId(), 'stock' => $newStockValue ],
+                ],
+                $context
+            );
+            if($newStockValue < 0)
+            {
+                $this->sendErrorNotification('QSK error','New stockvalue is below 0, check logs and data' . $product->getProductNumber(),['']);
+            }
+        }
+    }
+
+    /* Sends an eMail to every entry in the plugin configuration inside the administration frontend */
+    public function sendErrorNotification(string $errorSubject, string $errorMessage, array $fileArray)
+    {
+        $notificationSalesChannel = $this->systemConfigService->get('ASOrderInterface.config.fallbackSaleschannelNotification');
+
+        $recipientList = $this->systemConfigService->get('ASOrderInterface.config.errorNotificationRecipients');
+        $recipientData = explode(';', $recipientList);
+        $recipients = null;
+        for ($i = 0; $i< count($recipientData); $i +=2 )
+        {
+            $recipientName = $recipientData[$i];
+            $recipientAddress = $recipientData[$i+1];
+
+            $mailCheck = explode('@', $recipientAddress);
+            if(count($mailCheck) != 2)
+            {
+                continue;
+            }
+            $recipients[$recipientAddress] = $recipientName;
+        }
+
+        $this->mailServiceHelper->sendMyMail($recipients, $notificationSalesChannel, $this->senderName, $errorSubject, $errorMessage, $errorMessage, $fileArray);
+    }
+
+    public function updateDispoControlData(string $articleNumber, $amount, $context)
+    {
+        $entity = null;
+        /** @var EntityRepositoryInterface $asDispoDataRepository */
+        $asDispoDataRepository = $this->container->get('as_dispo_control_data.repository');
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('productNumber', $articleNumber));
+
+        /** @var DispoControlDataEntity $entity*/
+        $entity = $asDispoDataRepository->search($criteria,$context)->first();
+
+        if($entity == null || $amount == 0)
+            return;
+
+        $asDispoDataRepository->update([
+            ['id' => $entity->getId(), 'incoming' => $entity->getIncoming()-$amount],
+        ], $context);
+    }    
+
+    public function isMyScheduledTaskCk(string $taskName): bool
+    {
+        if($taskName == 'as.scheduled_order_transfer_task')
+            return true;
+        if($taskName == 'as.scheduled_order_process_article_error')
+            return true;
+        if($taskName == 'as.scheduled_order_process_rmwa')
+            return true;
+        if($taskName == 'as.scheduled_order_process_rmwe')
+            return true;
+        if($taskName == 'as.scheduled_order_process_stock_feedback')
+            return true;
     
+        return false;
+    }
+
+    /* Deletes recursive every file and folder in given path. So... be careful which path gets passed to this function */
+    public function deleteFiles($dir)
+    {
+        return;
+        $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+        $files = new RecursiveIteratorIterator($it,
+                RecursiveIteratorIterator::CHILD_FIRST);
+        foreach($files as $file) 
+        {
+            if ($file->isDir())
+            {
+                rmdir($file->getRealPath());
+            }
+            else 
+            {
+                unlink($file->getRealPath());
+            }
+        }
+        rmdir($dir);
+    }
+    /* Deletes recursive every file and folder in given path. So... be careful which path gets passed to this function */
+    public function archiveFiles($dir,$delete)
+    {
+        if(!$delete)
+        {
+            
+            $archivePath = $this->workingDirectory . "Archive";
+            $files = scandir($dir);
+            if ($files != 0)
+            {
+                if (!file_exists($archivePath)) {
+                    mkdir($archivePath, 0777, true);
+                }
+                //copy all files from $dir to $archivePath
+                
+                for($i = 2; $i < count($files); $i++)
+                {
+                    $source = $dir . '/' . $files[$i]; 
+                    $dest = $archivePath . $files[$i]; 
+                    copy($source,$dest);
+                }
+            }            
+        }
+        $this->deleteFiles($dir);     
+    }
 }
