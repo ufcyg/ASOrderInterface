@@ -971,6 +971,7 @@ class OrderInterfaceController extends AbstractController
      */
     public function initStockQS(Context $context)
     {
+        $data = null;
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
         /** @var EntityRepositoryInterface $productsRepository */
         $productsRepository = $this->container->get('product.repository');
@@ -985,10 +986,11 @@ class OrderInterfaceController extends AbstractController
                 $data[] = [ 'productId' => $productID, 'faulty' => 0, 'clarification' => 0, 'postprocessing' => 0, 'other' => 0];
             }
         }
-        $stockQSRepository->create(
-            $data,
-            Context::createDefaultContext()
-        );
+        if($data != null)
+            $stockQSRepository->create(
+                $data,
+                Context::createDefaultContext()
+            );
         return new Response('',Response::HTTP_NO_CONTENT);
     }
     public function deleteStockQSEntry(string $productID, Context $context)

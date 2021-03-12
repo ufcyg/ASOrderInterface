@@ -584,7 +584,7 @@ class OrderInterfaceUtils
                 }
             }            
         }
-        $this->sendErrorNotification("Archive Files from ${from}","Deleting: ${dir}",['']);
+        // $this->sendErrorNotification("Archive Files from ${from}","Deleting: ${dir}",['']);
         $this->deleteFiles($dir);     
     }
 }
