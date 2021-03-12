@@ -26,6 +26,6 @@ class ScheduledOrderProcessRMWETaskHandler extends ScheduledTaskHandler
 
     public function run(): void
     {
-        // $this->interfaceController->pullRMWE(Context::createDefaultContext());
+        $this->interfaceController->pullRMWE(Context::createDefaultContext());
     }    
 }

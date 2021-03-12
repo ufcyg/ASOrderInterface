@@ -26,6 +26,6 @@ class ScheduledOrderProcessArticleErrorTaskHandler extends ScheduledTaskHandler
 
     public function run(): void
     {
-        // $this->interfaceController->pullArticleError(Context::createDefaultContext());
+        $this->interfaceController->pullArticleError(Context::createDefaultContext());
     }    
 }

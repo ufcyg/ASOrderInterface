@@ -26,6 +26,6 @@ class ScheduledOrderProcessRMWATaskHandler extends ScheduledTaskHandler
 
     public function run(): void
     {
-        // $this->interfaceController->pullRMWA(Context::createDefaultContext());
+        $this->interfaceController->pullRMWA(Context::createDefaultContext());
     }    
 }

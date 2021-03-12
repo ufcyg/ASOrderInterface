@@ -26,6 +26,6 @@ class ScheduledOrderProcessStockFeedbackTaskHandler extends ScheduledTaskHandler
 
     public function run(): void
     {
-        // $this->interfaceController->pullBestand(Context::createDefaultContext());
+        $this->interfaceController->pullBestand(Context::createDefaultContext());
     }    
 }
