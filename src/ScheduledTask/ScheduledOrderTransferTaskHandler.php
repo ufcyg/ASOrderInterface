@@ -26,6 +26,6 @@ class ScheduledOrderTransferTaskHandler extends ScheduledTaskHandler
 
     public function run(): void
     {
-        // $this->interfaceController->submitOrders(Context::createDefaultContext());
+        $this->interfaceController->submitOrders(Context::createDefaultContext());
     }    
 }
