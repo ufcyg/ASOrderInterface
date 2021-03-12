@@ -437,7 +437,7 @@ class OrderInterfaceController extends AbstractController
                 }
             }
         } 
-        $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished);
+        $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished,'ReceivedStatusReply/RM_WA/');
         return new Response('',Response::HTTP_NO_CONTENT);
     }
     
@@ -544,7 +544,7 @@ class OrderInterfaceController extends AbstractController
                 }
             }
         }
-        $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished);
+        $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished,'ReceivedStatusReply/RM_WE/');
         return new Response('',Response::HTTP_NO_CONTENT);
     }    
 
@@ -585,7 +585,7 @@ class OrderInterfaceController extends AbstractController
                 $this->oiUtils->sendErrorNotification('Error: Article base','Error reported by logistics partner, submitted article base contains errors check logfile for further informations.', [$path . $filename]);
             }
         }
-        $this->oiUtils->archiveFiles($path,false);
+        $this->oiUtils->archiveFiles($path,false,'ReceivedStatusReply/Artikel_Error/');
         return new Response('',Response::HTTP_NO_CONTENT);
     }
     /**
@@ -932,7 +932,7 @@ class OrderInterfaceController extends AbstractController
                     }
             }
         }
-        $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished);
+        $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished,'ReceivedStatusReply/Bestand/');
         return new Response('',Response::HTTP_NO_CONTENT);
     }
 

@@ -545,7 +545,6 @@ class OrderInterfaceUtils
     /* Deletes recursive every file and folder in given path. So... be careful which path gets passed to this function */
     public function deleteFiles($dir)
     {
-        return;
         $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
         $files = new RecursiveIteratorIterator($it,
                 RecursiveIteratorIterator::CHILD_FIRST);
@@ -563,28 +562,29 @@ class OrderInterfaceUtils
         rmdir($dir);
     }
     /* Deletes recursive every file and folder in given path. So... be careful which path gets passed to this function */
-    public function archiveFiles($dir,$delete)
+    public function archiveFiles($dir,$delete,string $from)
     {
         if(!$delete)
         {
-            
-            $archivePath = $this->workingDirectory . "Archive";
+            $archivePath = $this->folderRoot . "Archive/${from}";
             $files = scandir($dir);
             if ($files != 0)
             {
-                if (!file_exists($archivePath)) {
-                    mkdir($archivePath, 0777, true);
-                }
-                //copy all files from $dir to $archivePath
-                
                 for($i = 2; $i < count($files); $i++)
                 {
-                    $source = $dir . '/' . $files[$i]; 
+                    $source = $dir . $files[$i]; 
+                    $this->createTodaysFolderPath($archivePath,$timeStamp);
+                    $archivePath = $archivePath . $timeStamp . '/'; 
+                    if (!file_exists($archivePath)) {
+                        mkdir($archivePath, 0777, true);
+                    }
                     $dest = $archivePath . $files[$i]; 
+                    $this->sendErrorNotification("Archive Files from ${from}","Copying from: ${source}<br>To:${dest}",['']);
                     copy($source,$dest);
                 }
             }            
         }
+        $this->sendErrorNotification("Archive Files from ${from}","Deleting: ${dir}",['']);
         $this->deleteFiles($dir);     
     }
 }
