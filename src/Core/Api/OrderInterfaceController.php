@@ -343,7 +343,8 @@ class OrderInterfaceController extends AbstractController
                     $orderLineItemRepository = $this->container->get('order_line_item.repository');
                     /** @var OrderEntity $order */
                     $order = $this->oiUtils->getOrder($this->container->get('order.repository'), 'orderNumber', $filenameContents[2],$context);
-
+                    if ($order == null)
+                        continue;
                     /** @var string $orderDelivery */
                     $orderDeliveryID = $this->oiUtils->getDeliveryEntityID($orderDeliveryRepository, $order->getId(),$context);
                     
