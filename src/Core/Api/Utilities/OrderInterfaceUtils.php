@@ -567,14 +567,14 @@ class OrderInterfaceUtils
             $files = scandir($dir);
             if ($files != 0)
             {
+                $this->createTodaysFolderPath($archivePath,$timeStamp);
+                $archivePath = $archivePath . $timeStamp . '/'; 
+                if (!file_exists($archivePath)) {
+                    mkdir($archivePath, 0777, true);
+                }
                 for($i = 2; $i < count($files); $i++)
                 {
                     $source = $dir . $files[$i]; 
-                    $this->createTodaysFolderPath($archivePath,$timeStamp);
-                    $archivePath = $archivePath . $timeStamp . '/'; 
-                    if (!file_exists($archivePath)) {
-                        mkdir($archivePath, 0777, true);
-                    }
                     $dest = $archivePath . $files[$i]; 
                     $this->sendErrorNotification("Archive Files from ${from}","Copying from: ${source}<br>To:${dest}",['']);
                     copy($source,$dest);
