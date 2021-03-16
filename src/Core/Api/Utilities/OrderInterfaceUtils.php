@@ -52,10 +52,7 @@ class OrderInterfaceUtils
     }
     
 
-    /**
-     * @internal
-     * @required
-     */
+    /** @internal @required */
     public function setContainer(ContainerInterface $container): ?ContainerInterface
     {
         $previous = $this->container;
@@ -584,7 +581,7 @@ class OrderInterfaceUtils
                 }
             }            
         }
-        $this->sendErrorNotification("Archive Files from ${from}","Deleting: ${dir}",['']);
+        // $this->sendErrorNotification("Archive Files from ${from}","Deleting: ${dir}",['']);
         $this->deleteFiles($dir);     
     }
 }
