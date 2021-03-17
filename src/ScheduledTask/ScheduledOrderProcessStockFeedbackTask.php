@@ -13,6 +13,6 @@ class ScheduledOrderProcessStockFeedbackTask extends ScheduledTask
 
     public static function getDefaultInterval(): int
     {
-        return 86400; // 5minutes
+        return 86340; // daily
     }
 }

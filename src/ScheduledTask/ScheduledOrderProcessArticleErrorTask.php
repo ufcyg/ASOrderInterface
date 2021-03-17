@@ -13,6 +13,6 @@ class ScheduledOrderProcessArticleErrorTask extends ScheduledTask
 
     public static function getDefaultInterval(): int
     {
-        return 300; // 5minutes
+        return 240; // 4minutes
     }
 }

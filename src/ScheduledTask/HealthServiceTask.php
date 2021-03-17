@@ -13,6 +13,6 @@ class HealthServiceTask extends ScheduledTask
 
     public static function getDefaultInterval(): int
     {
-        return 3600; // 60minutes
+        return 3540; // 59minutes
     }
 }

@@ -337,7 +337,7 @@ class OrderInterfaceUtils
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
         /** @var EntityRepositoryInterface $productRepository */
         $productRepository = $this->container->get('product.repository');
-        $product = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
+        $product = $this->getProduct($productRepository, $articleNumber, $context);
 
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('productId',$product->getId()));
