@@ -110,6 +110,15 @@
             <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
             <tag name="messenger.message_handler" />
         </service>
+<!-- submitArticlebase -->
+        <service id="ASOrderInterface\ScheduledTask\ScheduledSubmitArticlebaseTask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+        <service id="ASOrderInterface\ScheduledTask\ScheduledSubmitArticlebaseTaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="ASOrderInterface\Core\Api\OrderInterfaceController" />
+            <tag name="messenger.message_handler" />
+        </service>
         
     </services>
 </container>
