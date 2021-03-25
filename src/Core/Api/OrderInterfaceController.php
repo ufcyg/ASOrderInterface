@@ -844,7 +844,8 @@ class OrderInterfaceController extends AbstractController
                                 /** @var EntityRepositoryInterface $stockQSRepository */
                                 $stockQSRepository = $this->container->get('as_stock_qs.repository');
                                 $productEntity = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
-
+                                if($productEntity == null)
+                                    continue;
                                 switch($lineContents[7])
                                 {
                                     case 'KL': // klärfall / clarification
@@ -891,6 +892,8 @@ class OrderInterfaceController extends AbstractController
                                 /** @var EntityRepositoryInterface $stockQSRepository */
                                 $stockQSRepository = $this->container->get('as_stock_qs.repository');
                                 $productEntity = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
+                                if($productEntity == null)
+                                    continue;
                                 switch($lineContents[7])
                                 {
                                     case 'KL': // klärfall / clarification

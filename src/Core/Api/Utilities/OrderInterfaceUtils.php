@@ -576,7 +576,7 @@ class OrderInterfaceUtils
                 {
                     $source = $dir . $files[$i]; 
                     $dest = $archivePath . $files[$i]; 
-                    $this->sendErrorNotification("Archive Files from ${from}","Copying from: ${source}<br>To:${dest}",['']);
+                    // $this->sendErrorNotification("Archive Files from ${from}","Copying from: ${source}<br>To:${dest}",['']);
                     copy($source,$dest);
                 }
             }            
