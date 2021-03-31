@@ -385,7 +385,7 @@ class OrderInterfaceUtils
         /** @var EntityRepositoryInterface $stockQSRepository */
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
 
-        $productEntity = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
+        $productEntity = $this->getProduct($productRepository, $articleNumber, $context);
         $productID = $productEntity->getId();
 
         $criteria = new Criteria();
@@ -430,7 +430,7 @@ class OrderInterfaceUtils
         /** @var EntityRepositoryInterface $productRepository */
         $productRepository = $this->container->get('product.repository');
         /** @var ProductEntity $product */
-        $product = $this->oiUtils->getProduct($productRepository,$articleNumber,$context);
+        $product = $this->getProduct($productRepository,$articleNumber,$context);
         $productID = $product->getId();
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('productId',$productID));
