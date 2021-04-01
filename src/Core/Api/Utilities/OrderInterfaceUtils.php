@@ -315,7 +315,8 @@ class OrderInterfaceUtils
 
         /** @var ProductEntity $productEntity */
         $productEntity = $this->getProduct($this->container->get('product.repository'), $articleNumber, $context);
-
+        if($productEntity == null)
+            return;
         $currentStock = $productEntity->getStock();
         $currentStockAvailable = $productEntity->getAvailableStock();
 
@@ -338,7 +339,8 @@ class OrderInterfaceUtils
         /** @var EntityRepositoryInterface $productRepository */
         $productRepository = $this->container->get('product.repository');
         $product = $this->getProduct($productRepository, $articleNumber, $context);
-
+        if($product == null)
+            return;
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('productId',$product->getId()));
 

@@ -525,6 +525,8 @@ class OrderInterfaceController extends AbstractController
                             continue;
 
                         $articleNumber = $lineContents[5];
+                        // if($articleNumber == '99999')
+                        //     break;
                         $amount = $lineContents[6];
                         $amountAvailable = $lineContents[7];
                         // $amountDamaged = $lineContents[8];
@@ -870,6 +872,7 @@ class OrderInterfaceController extends AbstractController
                                     break;
                                     default:
                                         $current = $productEntity->getStock();
+
                                         $productRepository->update([
                                             ['id' => $productEntity->getId(), 'stock' => $current + intval($lineContents[5])],
                                         ],$context);
