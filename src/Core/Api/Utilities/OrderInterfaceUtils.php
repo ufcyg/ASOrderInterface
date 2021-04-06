@@ -15,14 +15,12 @@ use DateInterval;
 use DateTime;
 use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
-use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use ASOrderInterface\Core\Content\StockQS\OrderInterfaceStockQSEntity;
@@ -61,36 +59,6 @@ class OrderInterfaceUtils
         return $previous;
     }
 
-    public function containerTest()
-    {
-        /** @var EntityRepositoryInterface $deadMessagesRepo */
-        $deadMessagesRepo = $this->container->get('product.repository');
-    }
-    /* Gets an already created criteria and extends it with a date filter*/
-    public function addCriteriaFilterDate(Criteria $criteria): Criteria
-    {
-        $yesterday = $this->createDateFromString('yesterday');
-
-        $now = $this->createDateFromString('now');
-
-        $criteria->addFilter(new RangeFilter('orderDate', [
-            RangeFilter::GTE => $yesterday,
-            RangeFilter::LTE => $now
-        ]));
-        return $criteria;
-    }
-
-    /* Creates a timestamp that will be used to filter by this date */
-    public function createDateFromString(string $daytime): string
-    {
-        $timeStamp = new DateTime();
-        $timeStamp->add(DateInterval::createFromDateString($daytime));
-        $timeStamp = $timeStamp->format('Y-m-d H:i:s.u');
-        $timeStamp = substr($timeStamp, 0, strlen($timeStamp) - 3);
-
-        return $timeStamp;
-    }
-
     /* Creates a timeStamp that will be attached to the end of the filename */
     public function createShortDateFromString(string $daytime): string
     {
@@ -124,15 +92,6 @@ class OrderInterfaceUtils
         file_put_contents($filePath,$fileContent);
         return $filePath;
     }
-
-    /* Returns a search result containing all products in the products repository*/
-    public function getAllProducts(Context $context): EntitySearchResult
-    {
-        $productsRepository = $this->container->get('product.repository');
-        $criteria = new Criteria();
-        /** @var EntitySearchResult */
-        return $productsRepository->search($criteria, $context);
-    }
     /* Returns a specific product defined by the articleNumber */
     public function getProduct(EntityRepositoryInterface $productRepository, string $articleNumber, Context $context): ?ProductEntity
     {
@@ -142,54 +101,12 @@ class OrderInterfaceUtils
         $searchResult = $productRepository->search($criteria,$context);
         return $searchResult->first();
     }
-    /* Returns a specific stock qs entry defined by the productId */
-    public function getStockQSEntity(EntityRepositoryInterface $stockQSEntity, string $productID, Context $context): OrderInterfaceStockQSEntity
-    {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('productId', $productID));
-
-        $searchResult = $stockQSEntity->search($criteria,$context);
-        return $searchResult->first();
-    }
-
-    /* Depending on the flag $applyFilter all orders will be returned if false, a filtration by date will happen if true*/
-    public function getOrderEntities(bool $applyFilter, Context $context)
-    {
-        $orderRepository = $this->container->get('order.repository');
-        $criteria = $applyFilter ? $this->addCriteriaFilterDate(new Criteria()) : new Criteria();
-
-        /** @var EntitySearchResult $entities */
-        $entities = $orderRepository->search($criteria, $context);
-
-        if(count($entities) === 0){
-            return 0;
-        }
-        return $entities;
-    }
-    
-    /* Returns the order entity depending on the datafield identifier */
-    public function getOrder($orderRepository, $identifier, $filenameContents, $context)
-    {
-        /** @var Criteria $criteria */
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter($identifier, $filenameContents));
-        /** @var EntitySearchResult $entities */
-        $orderEntities = $orderRepository->search($criteria, $context);
-        /** @var OrderEntity $order */
-        $order = $orderEntities->first();
-        return $order;
-    }
 
     /* Returns an array with all saved order line items associated to the given orderID */
     public function getOrderedProducts(string $orderID, Context $context): array
     {
-        $lineItemsRepository = $this->container->get('order_line_item.repository');
-        /** @var Criteria $criteria */
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('orderId', $orderID));
         /** @var EntitySearchResult $lineItemEntity */
-        $lineItemEntity = $lineItemsRepository->search($criteria, $context);
-
+        $lineItemEntity = $this->getFilteredEntitiesOfRepository($this->container->get('order_line_item.repository'),'orderId',$orderID,$context);
         $lineItemArray = [];
         $i = 0;
         foreach($lineItemEntity as $lineItem)
@@ -204,12 +121,8 @@ class OrderInterfaceUtils
     /* Returns the billing as well as the shipping address in a single array, if the 2nd half is empty the first 6 entries are used as billing AND shipping address */
     public function getDeliveryAddress(string $orderID, string $eMailAddress, Context $context): array
     {
-        $orderDeliveryAddressRepository = $this->container->get('order_address.repository');
-        /** @var Criteria $criteria */
-        $criteria = new Criteria(); //create criteria
-        $criteria->addFilter(new EqualsFilter('orderId', $orderID)); //add filter
         /** @var EntitySearchResult $addressEntity */
-        $addressEntity = $orderDeliveryAddressRepository->search($criteria, $context); // search the repository with the predefined criteria argument
+        $addressEntity = $this->getFilteredEntitiesOfRepository($this->container->get('order_address.repository'),'orderId',$orderID,$context);
 
         /** @var OrderAddressEntity $deliverAddressEntity */
         $deliverAddressEntity;
@@ -253,22 +166,6 @@ class OrderInterfaceUtils
         return $countryEntity->getIso();
     }
 
-    /* Returns the entity ID of the delivery DB entry according to the given orderID */
-    public function getDeliveryEntityID($orderDeliverRepository, string $orderEntityID, Context $context): string
-    {
-        $criteria = new Criteria();
-        $entities = $orderDeliverRepository->search($criteria, $context);
-
-        /** @var OrderDeliveryEntity $orderDelivery */
-        foreach($entities as $entityID => $orderDelivery)
-        {
-            if ($orderDelivery->getOrderId() === $orderEntityID)
-            {
-                return $orderDelivery->getId();
-            }
-        }
-    }
-
     /* Adds tracking numbers to orderDelivery DB entry */
     public function updateTrackingNumbers($orderDeliveryRepository, $orderDeliveryID, $trackingnumbers, $context)
     {
@@ -294,34 +191,18 @@ class OrderInterfaceUtils
 
     }
 
-    // Checks if cancellation of the passed order has already been confirmed, returns true if entry already exists
-    public function OrderCancelConfirmationExistsCk(EntityRepositoryInterface $cancelConfirmationRepository, string $orderID,Context $context): bool
-    {
-        $criteria = new Criteria();
-
-        $criteria->addFilter(new EqualsFilter('orderId', $orderID));
-
-        /** @var EntitySearchResult $searchResult */
-        $searchResult = $cancelConfirmationRepository->search($criteria, $context);
-        
-        return count($searchResult) != 0 ? true : false;
-    }
-
     /* Updates stock according to logistics partner response */
-    public function updateProduct(string $articleNumber, $stockAddition, $availableStockAddition, $context)
+    public function updateProduct(string $productNumber, $availableStockAddition, $context)
     {
         /** @var EntityRepositoryInterface $productRepository */
         $productRepository = $this->container->get('product.repository');
 
         /** @var ProductEntity $productEntity */
-        $productEntity = $this->getProduct($this->container->get('product.repository'), $articleNumber, $context);
+        $productEntity = $this->getFilteredEntitiesOfRepository($productRepository, 'productNumber', $productNumber, $context)->first();
         if($productEntity == null)
             return;
         $currentStock = $productEntity->getStock();
-        $currentStockAvailable = $productEntity->getAvailableStock();
-
         $newStockValue = $currentStock + intval($availableStockAddition);
-        // $newAvailableStockValue = $currentStockAvailable + intval($availableStockAddition);
 
         $productRepository->update(
             [
@@ -332,29 +213,27 @@ class OrderInterfaceUtils
     }    
 
     /* */
-    public function updateQSStock(array $lineContents, string $articleNumber, Context $context)
+    public function updateQSStock(array $lineContents, string $productNumber, Context $context)
     {
         /** @var EntityRepositoryInterface $stockQSRepository */
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
-        /** @var EntityRepositoryInterface $productRepository */
-        $productRepository = $this->container->get('product.repository');
-        $product = $this->getProduct($productRepository, $articleNumber, $context);
+        /** @var ProductEntity $product */
+        $product = $this->getFilteredEntitiesOfRepository($this->container->get('product.repository'), 'productNumber', $productNumber, $context)->first();
         if($product == null)
             return;
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('productId',$product->getId()));
 
-        
         /** @var EntitySearchResult $searchResult */
-        $searchResult = null;
-        
-        $searchResult = $stockQSRepository->search($criteria,$context);
+        $searchResult = $this->getFilteredEntitiesOfRepository($stockQSRepository, 'productId', $product->getId(), $context);
             
         if(count($searchResult) == 0)
         {
             // generate new entry
             $stockQSRepository->create([
-                ['productId' => $product->getId(), 'faulty' => intval($lineContents[8]), 'clarification' => intval($lineContents[9]), 'postprocessing' => intval($lineContents[10]), 'other' => intval($lineContents[11])],
+                ['productId' => $product->getId(), 
+                'faulty' => intval($lineContents[8]), 
+                'clarification' => intval($lineContents[9]), 
+                'postprocessing' => intval($lineContents[10]), 
+                'other' => intval($lineContents[11])],
             ],
                 $context
             );
@@ -373,12 +252,33 @@ class OrderInterfaceUtils
             $other = $stockQSEntity->getOther();
             
             $stockQSRepository->update([
-                ['id' => $entry->getId(), 'productId' => $product->getId(), 'faulty' => intval($lineContents[8]) + $faulty, 'clarification' => intval($lineContents[9]) + $clarification, 'postprocessing' => intval($lineContents[10]) + $postprocessing, 'other' => intval($lineContents[11]) + $other],
+                ['id' => $entry->getId(), 
+                'productId' => $product->getId(), 
+                'faulty' => intval($lineContents[8]) + $faulty, 
+                'clarification' => intval($lineContents[9]) + $clarification, 
+                'postprocessing' => intval($lineContents[10]) + $postprocessing, 
+                'other' => intval($lineContents[11]) + $other],
             ],
                 $context
             );
         }
     }
+
+    public function updateDispoControlData(string $productNumber, $amount, $context)
+    {
+        /** @var EntityRepositoryInterface $asDispoDataRepository */
+        $asDispoDataRepository = $this->container->get('as_dispo_control_data.repository');
+        /** @var DispoControlDataEntity $entity*/
+        $entity = $this->getFilteredEntitiesOfRepository($asDispoDataRepository, 'productNumber', $productNumber, $context)->first();
+
+        if(count($entity) == 0 || $amount == 0)
+            return;
+
+        $asDispoDataRepository->update([
+            ['id' => $entity->getId(), 
+            'incoming' => $entity->getIncoming()-$amount],
+        ], $context);
+    } 
 
     public function updateQSStockBS(int $faulty, int $postprocessing, int $other, int $clarification, string $articleNumber, Context $context)
     {
@@ -401,7 +301,11 @@ class OrderInterfaceUtils
         {
             // generate new entry
             $stockQSRepository->create([
-                ['productId' => $productID, 'faulty' => $faulty, 'clarification' => $clarification, 'postprocessing' => $postprocessing, 'other' => $other],
+                ['productId' => $productID, 
+                'faulty' => $faulty, 
+                'clarification' => $clarification, 
+                'postprocessing' => $postprocessing, 
+                'other' => $other],
             ], $context);
             return;
         }
@@ -418,30 +322,30 @@ class OrderInterfaceUtils
             $currentOther = $stockQSEntity->getOther();
             
             $stockQSRepository->update([
-                ['id' => $entry->getId(), 'productId' => $productID, 'faulty' => $currentFaulty + $faulty, 'clarification' => $currentClarification + $clarification, 'postprocessing' => $currentPostprocessing + $postprocessing, 'other' => $currentOther + $other],
+                ['id' => $entry->getId(), 
+                'productId' => $productID, 
+                'faulty' => $currentFaulty + $faulty, 
+                'clarification' => $currentClarification + $clarification, 
+                'postprocessing' => $currentPostprocessing + $postprocessing, 
+                'other' => $currentOther + $other],
             ],
                 $context
             );
         }
     }
 
-    public function processQSK(string $articleNumber, int $faulty, int $clarification, int $postprocessing, int $other, int $stock ,Context $context)
+    public function processQSK(string $productNumber, int $faulty, int $clarification, int $postprocessing, int $other, int $stock ,Context $context)
     {
         /** @var EntityRepositoryInterface $stockQSRepository */
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
         /** @var EntityRepositoryInterface $productRepository */
         $productRepository = $this->container->get('product.repository');
         /** @var ProductEntity $product */
-        $product = $this->getProduct($productRepository,$articleNumber,$context);
-        $productID = $product->getId();
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('productId',$productID));
+        $product = $this->getFilteredEntitiesOfRepository($productRepository, 'productNumber', $productNumber, $context)->first();
+        /** @var OrderInterfaceStockQSEntity $stockQSEntity */
+        $stockQSEntity = $this->getFilteredEntitiesOfRepository($stockQSRepository, 'productId', $product->getId(), $context)->first();
 
-        $searchResult = null;
-        $searchResult = $stockQSRepository->search($criteria,$context);
-        
-
-        if(count($searchResult) == 0)
+        if($stockQSEntity == null)
         {
             if($faulty < 0 || $clarification < 0 || $postprocessing < 0 || $other < 0)
             {
@@ -449,20 +353,26 @@ class OrderInterfaceUtils
                 return;
             }
             $stockQSRepository->create([
-                ['productId' => $productID, 'faulty' => $faulty, 'clarification' => $clarification, 'postprocessing' => $postprocessing, 'other' => $other],
+                ['productId' => $product->getId(), 
+                'faulty' => $faulty, 
+                'clarification' => $clarification, 
+                'postprocessing' => $postprocessing, 
+                'other' => $other],
             ], $context);
         }
         else
         {
-            /** @var OrderInterfaceStockQSEntity $stockQSEntity */
-            $stockQSEntity = $searchResult->first();
             $currentFaulty = $stockQSEntity->getFaulty();
             $currentClarification = $stockQSEntity->getClarification();
             $currentPostprocessing = $stockQSEntity->getPostprocessing();
             $currentOther = $stockQSEntity->getOther();
 
             $stockQSRepository->update([
-                ['id' => $stockQSEntity->getId(), 'faulty' => $currentFaulty + $faulty, 'clarification' => $currentClarification + $clarification, 'postprocessing' => $currentPostprocessing + $postprocessing, 'other' => $currentOther + $other],
+                ['id' => $stockQSEntity->getId(), 
+                'faulty' => $currentFaulty + $faulty, 
+                'clarification' => $currentClarification + $clarification, 
+                'postprocessing' => $currentPostprocessing + $postprocessing, 
+                'other' => $currentOther + $other],
             ], $context);
 
             
@@ -471,7 +381,8 @@ class OrderInterfaceUtils
             $newStockValue = $currentStock + $stock;
             $productRepository->update(
                 [
-                    [ 'id' => $product->getId(), 'stock' => $newStockValue ],
+                    [ 'id' => $product->getId(), 
+                    'stock' => $newStockValue ],
                 ],
                 $context
             );
@@ -505,25 +416,6 @@ class OrderInterfaceUtils
 
         $this->mailServiceHelper->sendMyMail($recipients, $notificationSalesChannel, $this->senderName, $errorSubject, $errorMessage, $errorMessage, $fileArray);
     }
-
-    public function updateDispoControlData(string $articleNumber, $amount, $context)
-    {
-        $entity = null;
-        /** @var EntityRepositoryInterface $asDispoDataRepository */
-        $asDispoDataRepository = $this->container->get('as_dispo_control_data.repository');
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('productNumber', $articleNumber));
-
-        /** @var DispoControlDataEntity $entity*/
-        $entity = $asDispoDataRepository->search($criteria,$context)->first();
-
-        if($entity == null || $amount == 0)
-            return;
-
-        $asDispoDataRepository->update([
-            ['id' => $entity->getId(), 'incoming' => $entity->getIncoming()-$amount],
-        ], $context);
-    }    
 
     public function isMyScheduledTaskCk(string $taskName): bool
     {
@@ -585,5 +477,38 @@ class OrderInterfaceUtils
         }
         // $this->sendErrorNotification("Archive Files from ${from}","Deleting: ${dir}",['']);
         $this->deleteFiles($dir);     
+    }
+
+    public function getAllEntitiesOfRepository(EntityRepositoryInterface $repository, Context $context): ?EntitySearchResult
+    {   
+        /** @var Criteria $criteria */
+        $criteria = new Criteria();
+        /** @var EntitySearchResult $result */
+        $result = $repository->search($criteria,$context);
+
+        return $result;
+    }
+
+    public function getFilteredEntitiesOfRepository(EntityRepositoryInterface $repository, string $fieldName, $fieldValue, Context $context): ?EntitySearchResult
+    {   
+        /** @var Criteria $criteria */
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter($fieldName, $fieldValue));
+        /** @var EntitySearchResult $result */
+        $result = $repository->search($criteria,$context);
+
+        return $result;
+    }
+
+    public function entityExistsInRepositoryCk(EntityRepositoryInterface $repository, string $fieldName, $fieldValue, Context $context): bool
+    {
+        $criteria = new Criteria();
+
+        $criteria->addFilter(new EqualsFilter($fieldName, $fieldValue));
+
+        /** @var EntitySearchResult $searchResult */
+        $searchResult = $repository->search($criteria, $context);
+        
+        return count($searchResult) != 0 ? true : false;
     }
 }

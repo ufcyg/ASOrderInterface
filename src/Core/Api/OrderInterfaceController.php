@@ -115,7 +115,7 @@ class OrderInterfaceController extends AbstractController
     public function submitArticlebase(Context $context): ?Response
     { 
         /** @var EntitySearchResult $products */
-        $products = $this->oiUtils->getAllProducts($context);
+        $products = $this->oiUtils->getAllEntitiesOfRepository($this->container->get('product.repository'), $context);
 
         $csvString = '';
         foreach ($products as $product)
@@ -143,81 +143,66 @@ class OrderInterfaceController extends AbstractController
      */
     public function submitOrders(Context $context): ?Response
     {
-        /** @var EntitySearchResult $entities */
-        $entities = $this->oiUtils->getOrderEntities(false, $context); //TODO define which orders should be transmitted
-        if($entities == null){
+        /** @var EntitySearchResult $orders */
+        $orders = $this->oiUtils->getAllEntitiesOfRepository($this->container->get('order.repository'), $context);
+        if($orders == null){
             return new Response('',Response::HTTP_NO_CONTENT);
         }
-        if(count($entities) === 0){
+        if(count($orders) === 0){
             return new Response('',Response::HTTP_NO_CONTENT);
         }
         /** @var OrderEntity $order */
-        foreach($entities as $orderID => $order)
+        foreach($orders as $orderID => $order)
         {
             if(strcmp($order->getStateMachineState()->getTechnicalName(),'open') == 0)
             {
-                $orderNumber = $order->getOrderNumber();
-                $fileContent = $this->generateFileContent($order, $orderNumber, false, $context);
-                
-
-                $folderPath = $this->oiUtils->createTodaysFolderPath('Archive/SubmittedOrders', $timeStamp);
-                $filePath = $this->oiUtils->writeOrder($orderNumber, $folderPath, $fileContent, $this->companyID);
-                
-                $this->sendFile($filePath, "/WA" . "/waavis" . $orderNumber . ".csv");
+                $fileContent = $this->generateOrderContent($order, false, $context);
             }
             else if (strcmp($order->getStateMachineState()->getTechnicalName(),'cancelled') == 0)
             {
                 // get repository for confirmed cancelled orders
-                $cancelledConfirmation = $this->container->get('as_cancelled_confirmation.repository');
+                $cancelledConfirmationRepository = $this->container->get('as_cancelled_confirmation.repository');
                 //check if order has already been confirmed, if it isn't existant create new entity
-                if($this->oiUtils->OrderCancelConfirmationExistsCk($cancelledConfirmation, $order->getId(), $context))
+                if($this->oiUtils->entityExistsInRepositoryCk($cancelledConfirmationRepository, 'orderId', $order->getId(), $context))
                 {
                     continue;
                 }
-                $orderNumber = $order->getOrderNumber();
-                $fileContent = $this->generateFileContent($order, $orderNumber, true, $context);
-                
-                $folderPath = $this->oiUtils->createTodaysFolderPath('Archive/SubmittedOrders', $timeStamp);
-                $filePath = $this->oiUtils->writeOrder($orderNumber, $folderPath, $fileContent, $this->companyID);
-                
-                $this->sendFile($filePath, "/WA" . "/waavis" . $orderNumber . ".csv");
+                $fileContent = $this->generateOrderContent($order, true, $context);
             }
+            $folderPath = $this->oiUtils->createTodaysFolderPath('Archive/SubmittedOrders', $timeStamp);
+            $filePath = $this->oiUtils->writeOrder($order->getOrderNumber(), $folderPath, $fileContent, $this->companyID);
             
+            $this->sendFile($filePath, "/WA" . "/waavis" . $order->getOrderNumber() . ".csv");
         }
         return new Response('',Response::HTTP_NO_CONTENT);
     }
 
     /* Extracts all necessary data of the order for the logistics partner throught the CSVFactory */
-    public function generateFileContent(OrderEntity $order, string $orderNumber, bool $orderCancelled, $context): string
+    public function generateOrderContent(OrderEntity $order, bool $orderCancelled, $context): string
     {
         // init exportData variable, this will contain the billing/delivery address aswell as every line item of the order
         $exportData = [];
         /** @var string $orderID */
         $orderID = $order->getId(); // orderID used to search inside other Repositories for corresponding data
-
-        //customer eMail
         /** @var OrderCustomerEntity $orderCustomerEntity */
         $orderCustomerEntity = $order->getOrderCustomer();
-        $eMailAddress = $orderCustomerEntity->getEmail();
         // deliveryaddress 
-        $exportData = $this->oiUtils->getDeliveryAddress($orderID, $eMailAddress, $context);
+        $exportData = $this->oiUtils->getDeliveryAddress($orderID, $orderCustomerEntity->getEmail(), $context);
         $orderedProducts = $this->oiUtils->getOrderedProducts($orderID, $context);
         
-        $fileContent = '';
-        $orderContent = '';
         $i = 0;
-        /** @var OrderLineItemEntity $product */
-        foreach($orderedProducts as $product)
+        /** @var OrderLineItemEntity $orderLineItem */
+        foreach($orderedProducts as $orderLineItem)
         {//iterate through all products contained in this order
-            if ($product->getIdentifier() === "INTERNAL_DISCOUNT")
+            if ($orderLineItem->getIdentifier() === "INTERNAL_DISCOUNT")
             {//ignore the internal discount added if the ordering customer is an internal customer to avoid errors due to missing articlenumber etc.
                 continue;
             }
-            array_push($exportData, $product); // adding the lineitems to $exportData variable
-            $orderContent = $this->csvFactory->generateDetails($exportData, $orderNumber, $i, $orderContent, $orderCancelled, $context); 
+            array_push($exportData, $orderLineItem); // adding the lineitems to $exportData variable
+            $orderContent = $this->csvFactory->generateDetails($exportData, $order->getOrderNumber(), $i, '', $orderCancelled, $context); 
             $i++;
         }
-        $fileContent = $this->csvFactory->generateHeader($exportData, $orderNumber, $fileContent, $orderCustomerEntity->getCustomerId(), $context);
+        $fileContent = $this->csvFactory->generateHeader($exportData, $order->getOrderNumber(), '', $orderCustomerEntity->getCustomerId(), $context);
         $fileContent = $fileContent . $orderContent; // concatenation of header, which has to be written after the contents, due to the order value being calculated after every line item has been processed
         return $fileContent;
     }
@@ -261,8 +246,7 @@ class OrderInterfaceController extends AbstractController
                 if($filenameContents[1] === 'STATUS') // status of order data procession
                 {
                     /** @var OrderEntity $order */
-                    $order = $this->oiUtils->getOrder($this->container->get('order.repository'), 'orderNumber', $filenameContents[3],$context);
-                   
+                    $order = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('order.repository'), 'orderNumber', $filenameContents[3],$context)->first();
 
                     if($order == null)
                     {// wrong kind of file has been read, notify administration and prevent deletion of files
@@ -317,12 +301,12 @@ class OrderInterfaceController extends AbstractController
                 else if ($filenameContents[1] === 'STORNO') // cancellation(confirmation) by rieck
                 {
                     /** @var OrderEntity $order */
-                    $order = $this->oiUtils->getOrder($this->container->get('order.repository'), 'orderNumber', $filenameContents[2],$context);
+                    $order = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('order.repository'), 'orderNumber', $filenameContents[2],$context)->first();
                     
                     // get repository for confirmed cancelled orders
                     $cancelledConfirmation = $this->container->get('as_cancelled_confirmation.repository');
                     //check if order has already been confirmed, if it isn't existant create new entity
-                    if(!$this->oiUtils->OrderCancelConfirmationExistsCk($cancelledConfirmation, $order->getId(), $context))
+                    if(!$this->oiUtils->entityExistsInRepositoryCk($cancelledConfirmation, 'orderId', $order->getId(), $context))
                     {
                         $cancelledConfirmation->create([
                             ['orderId' => $order->getId()],
@@ -342,20 +326,11 @@ class OrderInterfaceController extends AbstractController
                     /** @var EntityRepositoryInterface $orderLineItemRepository */
                     $orderLineItemRepository = $this->container->get('order_line_item.repository');
                     /** @var OrderEntity $order */
-                    $order = $this->oiUtils->getOrder($this->container->get('order.repository'), 'orderNumber', $filenameContents[2],$context);
+                    $order = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('order.repository'), 'orderNumber', $filenameContents[2],$context)->first();
                     if ($order == null)
                         continue;
-                    /** @var string $orderDelivery */
-                    $orderDeliveryID = $this->oiUtils->getDeliveryEntityID($orderDeliveryRepository, $order->getId(),$context);
-                    
-                    /** @var Criteria $criteria */
-                    $criteria = new Criteria();
-                    $criteria->addFilter(new EqualsFilter('id', $orderDeliveryID));
-                    /** @var EntitySearchResult $entities */
-                    $orderDeliveryEntities = $orderDeliveryRepository->search($criteria, $context);
-                    /** @var OrderDeliveryEntity $orderDelivery */
-                    $orderDelivery = $orderDeliveryEntities->first();
-                    
+                    /** @var OrderDeliveryEntity $orderDeliveryEntity */
+                    $orderDelivery = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('order_delivery.repository'),'orderId', $order->getId(), $context)->first();                    
                     
                     $filecontents = file_get_contents($path . $filename);
                     $fileContentsByLine = explode(PHP_EOL,$filecontents);
@@ -388,7 +363,8 @@ class OrderInterfaceController extends AbstractController
                         /** @var OrderLineItemEntity $orderLineItem */
                         foreach($orderedProducts as $orderLineItem)
                         {
-                            $productToCompare = $this->oiUtils->getProduct($this->container->get('product.repository'),$productNumber,$context);
+                            /** @var ProductEntity $productToCompare */
+                            $productToCompare = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('product.repository'), 'productNumber', $productNumber, $context)->first();
                             if($productToCompare->getId() == $orderLineItem->getProductId())
                             {
                                 if($orderLineItem->getQuantity() != $reportedAmount)
@@ -430,10 +406,10 @@ class OrderInterfaceController extends AbstractController
                         $lineContents = explode(';', $fileContentsByLine[$j]);
                         array_push($trackingnumbers,$lineContents[9]);
                     }
-                    $stateChanged = $this->oiOrderServiceUtils->updateOrderDeliveryStatus($orderDelivery, $orderDeliveryID, 'ship');
+                    $stateChanged = $this->oiOrderServiceUtils->updateOrderDeliveryStatus($orderDelivery, $orderDelivery->getId(), 'ship');
                     if($stateChanged) // unly update tracking numbers if the parcel hasn't been shipped yet
                     {
-                        $this->oiUtils->updateTrackingNumbers($orderDeliveryRepository, $orderDeliveryID, array_unique($trackingnumbers), $context);
+                        $this->oiUtils->updateTrackingNumbers($orderDeliveryRepository, $orderDelivery->getId(), array_unique($trackingnumbers), $context);
                     }
                 }
             }
@@ -524,7 +500,7 @@ class OrderInterfaceController extends AbstractController
                         if(count($lineContents) <= 1)
                             continue;
 
-                        $articleNumber = $lineContents[5];
+                        $productNumber = $lineContents[5];
                         // if($articleNumber == '99999')
                         //     break;
                         $amount = $lineContents[6];
@@ -534,9 +510,9 @@ class OrderInterfaceController extends AbstractController
                         // $amountPostProcessing = $lineContents[10];
                         // $amountOther = $lineContents[11];
                         
-                        $this->oiUtils->updateProduct($articleNumber, $amount, $amountAvailable, $context);
-                        $this->oiUtils->updateQSStock($lineContents, $articleNumber, $context);
-                        $this->oiUtils->updateDispoControlData($articleNumber, intval($amount), $context);
+                        $this->oiUtils->updateProduct($productNumber, $amountAvailable, $context);
+                        $this->oiUtils->updateQSStock($lineContents, $productNumber, $context);
+                        $this->oiUtils->updateDispoControlData($productNumber, intval($amount), $context);
 
                         if($amount != $amountAvailable)
                         {
@@ -950,19 +926,16 @@ class OrderInterfaceController extends AbstractController
      */
     public function healthPing(Context $context)
     {
-        /** @var EntityRepositoryInterface $scheduledTaskRepository */
-        $scheduledTaskRepository = $this->container->get('scheduled_task.repository');
-        $scheduledTasks = $scheduledTaskRepository->search(new Criteria(),Context::createDefaultContext());
-
+        /** @var EntitySearchResult $scheduledTasks */
+        $scheduledTasks = $this->oiUtils->getAllEntitiesOfRepository($this->container->get('scheduled_task.repository'), $context);
         /** @var ScheduledTaskEntity $scheduledTask */
         foreach($scheduledTasks as $taskID => $scheduledTask)
         {
             $scheduledTaskName = $scheduledTask->getName();
             if(! $this->oiUtils->isMyScheduledTaskCk($scheduledTaskName))
                 continue;
-
-            $taskStatus = $scheduledTask->getStatus();
-            if($taskStatus == 'failed')
+                
+            if($scheduledTask->getStatus() == 'failed')
             {
                 $this->oiUtils->sendErrorNotification('Scheduled Task Failed', "Task $scheduledTaskName has failed.<br>Check dead messages for further informations.", ['']);
             }
@@ -980,17 +953,16 @@ class OrderInterfaceController extends AbstractController
     {
         $data = null;
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
-        /** @var EntityRepositoryInterface $productsRepository */
-        $productsRepository = $this->container->get('product.repository');
-        $products = $productsRepository->search(new Criteria(),$context);
+        $products = $this->oiUtils->getAllEntitiesOfRepository($this->container->get('product.repository'), $context);
         foreach($products as $productID => $product)
         {
-            $criteria = new Criteria();
-            $criteria->addFilter(new EqualsFilter('productId', $productID));
-            $searchResult = $stockQSRepository->search($criteria,$context);
-            if(count($searchResult) == 0)
-            {//add new entity because we havent found one
-                $data[] = [ 'productId' => $productID, 'faulty' => 0, 'clarification' => 0, 'postprocessing' => 0, 'other' => 0];
+            if(!$this->oiUtils->entityExistsInRepositoryCk($stockQSRepository, 'productId', $productID, $context)){
+                //add new entity because we havent found one
+                $data[] = [ 'productId' => $productID, 
+                            'faulty' => 0, 
+                            'clarification' => 0, 
+                            'postprocessing' => 0, 
+                            'other' => 0];
             }
         }
         if($data != null)
@@ -998,6 +970,7 @@ class OrderInterfaceController extends AbstractController
                 $data,
                 Context::createDefaultContext()
             );
+
         return new Response('',Response::HTTP_NO_CONTENT);
     }
     public function deleteStockQSEntry(string $productID, Context $context)
@@ -1005,13 +978,8 @@ class OrderInterfaceController extends AbstractController
         /** @var EntityRepositoryInterface $stockQSRepository */
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
 
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('productId', $productID));
-
-        $searchResult = $stockQSRepository->search($criteria,$context);
-        if(count($searchResult) > 0)
-        {
-            $entity = $searchResult->first();
+        if($this->oiUtils->entityExistsInRepositoryCk($stockQSRepository, 'productId', $productID, $context)){
+            $entity = $this->oiUtils->getFilteredEntitiesOfRepository($stockQSRepository, 'productId', $productID, $context)->first();
             $stockQSRepository->delete([
                 ['id' => $entity->getId()],
             ],$context);
