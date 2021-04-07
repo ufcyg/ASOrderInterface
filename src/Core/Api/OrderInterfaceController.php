@@ -3,7 +3,8 @@
 namespace ASOrderInterface\Core\Api;
 
 use ASControllingReport\Core\Api\ASControllingReportController;
-
+use ASDispositionControl\Core\Api\ASDispoControlController;
+use ASDispositionControl\Core\Content\DispoControlData\DispoControlDataEntity;
 use Shopware\Core\Framework\Context;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Shopware\Core\Framework\Routing\Annotation\RouteScope;
@@ -13,9 +14,7 @@ use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderCustomer\OrderCustomerEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemEntity;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use ASOrderInterface\Core\Api\Utilities\CSVFactory;
 use ASOrderInterface\Core\Api\Utilities\SFTPController;
@@ -49,6 +48,8 @@ class OrderInterfaceController extends AbstractController
     private $senderName;
     /** @var ASControllingReportController $controllingReportController */
     private $controllingReportController;
+    /** @var ASDispoControlController $dispoController */
+    private $dispoController;
     /** @var string $workingDirectory */
     private $workingDirectory;
 
@@ -57,6 +58,7 @@ class OrderInterfaceController extends AbstractController
                                 OrderInterfaceUtils $oiUtils,
                                 OIOrderServiceUtils $oiOrderServiceUtils,
                                 ASControllingReportController $controllingReportController,
+                                ASDispoControlController $dispoController,
                                 SFTPController $sftpController)
     {
         $this->systemConfigService = $systemConfigService;
@@ -67,6 +69,7 @@ class OrderInterfaceController extends AbstractController
         $this->senderName = 'Order Interface';
 
         $this->controllingReportController = $controllingReportController;
+        $this->dispoController = $dispoController;
 
         $this->workingDirectory = $this->systemConfigService->get('ASOrderInterface.config.workingDirectory');
 
@@ -102,7 +105,7 @@ class OrderInterfaceController extends AbstractController
         $response = $this->pullArticleError($context);
         $response = $this->pullRMWE($context);
         $response = $this->pullRMWA($context);
-        $response = $this->pullBestand($context);
+        $response = $this->pullStock($context);
         return $response;
     }
 
@@ -568,12 +571,14 @@ class OrderInterfaceController extends AbstractController
         return new Response('',Response::HTTP_NO_CONTENT);
     }
     /**
-     * @Route("/api/v{version}/_action/as-order-interface/pullBestand", name="api.custom.as_order_interface.pullBestand", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/pullStock
+    ", name="api.custom.as_order_interface.pullStock
+    ", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Pulls the stock report from remote sFTP server
      */
-    public function pullBestand(Context $context): ?Response
+    public function pullStock(Context $context): ?Response
     {
         $path = $this->oiUtils->createTodaysFolderPath('ReceivedStatusReply/Bestand', $timeStamp);
 
@@ -581,10 +586,10 @@ class OrderInterfaceController extends AbstractController
             mkdir($path, 0777, true);
         } 
         $this->sftpController->pullFile($path,'Bestand');
-        return $this->checkBestand($context);
+        return $this->checkStock($context);
     }
     /**
-     * @Route("/api/v{version}/_action/as-order-interface/checkBestand", name="api.custom.as_order_interface.checkBestand", methods={"POST"})
+     * @Route("/api/v{version}/_action/as-order-interface/checkStock", name="api.custom.as_order_interface.checkStock", methods={"POST"})
      * @param Context $context;
      * @return Response
      * Processes pulled stock report
@@ -594,8 +599,10 @@ class OrderInterfaceController extends AbstractController
      * other - SO
      * clarification - KL
      */
-    public function checkBestand(Context $context): ?Response
+    public function checkStock(Context $context): ?Response
     {
+        $this->dispoController->updateDispoControlData($context);
+
         $deleteFilesWhenFinished = false; // since a false bool value is null for shopware we predefine the false value... 
         //get flag for deleting files when finished
         $deleteFilesWhenFinished = $this->systemConfigService->get('ASOrderInterface.config.deleteFilesAfterEvaluation');
@@ -607,11 +614,12 @@ class OrderInterfaceController extends AbstractController
                 $filename = $files[$i];
                 $filenameContents = explode('_', $filename);
 
+                $filecontents = file_get_contents($path . $filename);
+                $fileContentsByLine = explode(PHP_EOL,$filecontents); 
+
                 switch ($filenameContents[0])
                     {
-                        case 'QSK':
-                            $filecontents = file_get_contents($path . $filename);
-                            $fileContentsByLine = explode(PHP_EOL,$filecontents);       
+                        case 'QSK':     
                             foreach ($fileContentsByLine as $entryID => $contentLine) {
                                 $lineContents = explode(';', $contentLine);
                                 if(count($lineContents) <= 1)
@@ -711,8 +719,6 @@ class OrderInterfaceController extends AbstractController
                             }
                         break;
                         case 'BESTAND': // Daily report of current available items
-                            $filecontents = file_get_contents($path . $filename);
-                            $fileContentsByLine = explode(PHP_EOL,$filecontents); 
                             $uniqueProductNumbers = array();
                             $condensedArray = array();      
                             $prevValue = 0;
@@ -748,38 +754,33 @@ class OrderInterfaceController extends AbstractController
 
                             for($y = 0; $y < $productCount; $y++)
                             {
-                                $articleNumber = $uniqueProductNumbers[$y];
+                                $productNumber = $uniqueProductNumbers[$y];
 
-                                $available = $condensedArray[$articleNumber . '-' . "available"];
-                                $qsFaulty = $condensedArray[$articleNumber . '-' . "qsFaulty"];
-                                $qsClarification = $condensedArray[$articleNumber . '-' . "qsClarification"];
-                                $qsPostprocessing = $condensedArray[$articleNumber . '-' . "qsPostprocessing"];
-                                $qsOther = $condensedArray[$articleNumber . '-' . "qsOther"];
-
-                                $productRepository = $this->container->get('product.repository');
-                                $stockQSRepository = $this->container->get('as_stock_qs.repository');
+                                $available = $condensedArray[$productNumber . '-' . "available"];
+                                $qsFaulty = $condensedArray[$productNumber . '-' . "qsFaulty"];
+                                $qsClarification = $condensedArray[$productNumber . '-' . "qsClarification"];
+                                $qsPostprocessing = $condensedArray[$productNumber . '-' . "qsPostprocessing"];
+                                $qsOther = $condensedArray[$productNumber . '-' . "qsOther"];
 
                                 /** @var ProductEntity $productEntity */
-                                $productEntity = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
+                                $productEntity = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('product.repository'), 'productNumber', $productNumber, $context)->first();
                                 if($productEntity == null)
                                 {
                                     $this->oiUtils->sendErrorNotification('Stock feedback contains unknown product', 'A product mentioned in the daily stock feedback report is unkown.<br>Please check the stock feedback at line ' . $y, [$path . $filename]);
                                     continue;
                                 }
 
-                                $criteria = new Criteria();
-                                $criteria->addFilter(new EqualsFilter('productId',$productEntity->getId()));
-
-                                $searchResult = $stockQSRepository->search($criteria,$context);
                                 /** @var OrderInterfaceStockQSEntity $stockQSEntity */
-                                $stockQSEntity = $searchResult->first();
-
+                                $stockQSEntity = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('as_stock_qs.repository'), 'productId', $productEntity->getId(), $context)->first();
+                                /** @var DispoControlDataEntity $dispoControlDataEntity */
+                                $dispoControlDataEntity = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('as_dispo_control_data.repository'), 'productId', $productEntity->getId(), $context)->first();
+                                
                                 $discrepancy = false;
                                 $discrepancyValue = 0;
-                                if($productEntity->getAvailableStock() != $available)
+                                if($dispoControlDataEntity->getStockAvailable() != $available)
                                 {
                                     $discrepancy = true;
-                                    $discrepancyValue = $productEntity->getAvailableStock() - $available;
+                                    $discrepancyValue = $dispoControlDataEntity->getStockAvailable() - $available;
                                 }
                                 if($stockQSEntity->getFaulty() != $qsFaulty)
                                 {
@@ -804,46 +805,46 @@ class OrderInterfaceController extends AbstractController
                                 if($discrepancy)
                                 {
                                     $deleteFilesWhenFinished = false;
-                                    $this->oiUtils->sendErrorNotification('Stock Feedback Discrepancy','Discrepancies found in stock feedback check logfile for further informations.<br>Articlenumber: ' . $articleNumber . "<br>Discrepancy: " . $discrepancyValue, [$path . $filename]);
+                                    $this->oiUtils->sendErrorNotification('Stock Feedback Discrepancy','Discrepancies found in stock feedback check logfile for further informations.<br>Articlenumber: ' . $productNumber . "<br>Discrepancy: " . $discrepancyValue, [$path . $filename]);
                                 }
                             }                       
                         break;
                         case 'BS+': // addition of currently available items (items lost but found, etc.)
-                            $filecontents = file_get_contents($path . $filename);
-                            $fileContentsByLine = explode(PHP_EOL,$filecontents); 
                             foreach ($fileContentsByLine as $entryID => $contentLine) {
                                 $lineContents = explode(';', $contentLine);
                                 if(count($lineContents) <= 1)
                                 {
                                     continue;
                                 }
-                                $articleNumber = $lineContents[1];
+
+                                $productNumber = $lineContents[1];
+
+                                /** @var EntityRepositoryInterface $productRepository */
                                 $productRepository = $this->container->get('product.repository');
-                                /** @var EntityRepositoryInterface $stockQSRepository */
-                                $stockQSRepository = $this->container->get('as_stock_qs.repository');
-                                $productEntity = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
+                                /** @var ProductEntity $productEntity */
+                                $productEntity = $this->oiUtils->getFilteredEntitiesOfRepository($productRepository, 'productNumber', $productNumber, $context)->first();
                                 if($productEntity == null)
                                     continue;
                                 switch($lineContents[7])
                                 {
                                     case 'KL': // klärfall / clarification
 
-                                        $this->oiUtils->updateQSStockBS(0,0,0,intval($lineContents[5]),$articleNumber,$context);
+                                        $this->oiUtils->updateQSStockBS(0,0,0,intval($lineContents[5]),$productEntity,$context);
                                         $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
                                     break;
                                     case 'NB': // Nachbearbeitung / postprocessing
                                         
-                                        $this->oiUtils->updateQSStockBS(0,intval($lineContents[5]),0,0,$articleNumber,$context);
+                                        $this->oiUtils->updateQSStockBS(0,intval($lineContents[5]),0,0,$productEntity,$context);
                                         $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
                                     break;
                                     case 'SO': // Sonstige / other
                                         
-                                        $this->oiUtils->updateQSStockBS(0,0,intval($lineContents[5]),0,$articleNumber,$context);
+                                        $this->oiUtils->updateQSStockBS(0,0,intval($lineContents[5]),0,$productEntity,$context);
                                         $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
                                     break;
                                     case 'DF': // Defekt // faulty
                                         
-                                        $this->oiUtils->updateQSStockBS(intval($lineContents[5]),0,0,0,$articleNumber,$context);
+                                        $this->oiUtils->updateQSStockBS(intval($lineContents[5]),0,0,0,$productEntity,$context);
                                         $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
                                     break;
                                     default:
@@ -856,9 +857,7 @@ class OrderInterfaceController extends AbstractController
                                 }
                             }
                         break;
-                        case 'BS-': // subtraction of currently available items (lost, stolen, destroyed, etc.)
-                            $filecontents = file_get_contents($path . $filename);
-                            $fileContentsByLine = explode(PHP_EOL,$filecontents);       
+                        case 'BS-': // subtraction of currently available items (lost, stolen, destroyed, etc.)    
                             foreach ($fileContentsByLine as $entryID => $contentLine) {
                                 $lineContents = explode(';', $contentLine);
                                 if(count($lineContents) <= 1)
@@ -866,33 +865,34 @@ class OrderInterfaceController extends AbstractController
                                     continue;
                                 }
 
-                                $articleNumber = $lineContents[1];
+                                $productNumber = $lineContents[1];
+
+                                /** @var EntityRepositoryInterface $productRepository */
                                 $productRepository = $this->container->get('product.repository');
-                                /** @var EntityRepositoryInterface $stockQSRepository */
-                                $stockQSRepository = $this->container->get('as_stock_qs.repository');
-                                $productEntity = $this->oiUtils->getProduct($productRepository, $articleNumber, $context);
+                                /** @var ProductEntity $productEntity */
+                                $productEntity = $this->oiUtils->getFilteredEntitiesOfRepository($productRepository, 'productNumber', $productNumber, $context)->first();
                                 if($productEntity == null)
                                     continue;
                                 switch($lineContents[7])
                                 {
                                     case 'KL': // klärfall / clarification
                                         
-                                        $this->oiUtils->updateQSStockBS(0,0,0,intval($lineContents[5]),$articleNumber,$context);
+                                        $this->oiUtils->updateQSStockBS(0,0,0,intval($lineContents[5]),$productEntity,$context);
                                         $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
                                     break;
                                     case 'NB': // Nachbearbeitung / postprocessing
                                         
-                                        $this->oiUtils->updateQSStockBS(0,intval($lineContents[5]),0,0,$articleNumber,$context);
+                                        $this->oiUtils->updateQSStockBS(0,intval($lineContents[5]),0,0,$productEntity,$context);
                                         $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
                                     break;
                                     case 'SO': // Sonstige / other
                                         
-                                        $this->oiUtils->updateQSStockBS(0,0,intval($lineContents[5]),0,$articleNumber,$context);
+                                        $this->oiUtils->updateQSStockBS(0,0,intval($lineContents[5]),0,$productEntity,$context);
                                         $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
                                     break;
                                     case 'DF': // Defekt // faulty
                                         
-                                        $this->oiUtils->updateQSStockBS(intval($lineContents[5]),0,0,0,$articleNumber,$context);
+                                        $this->oiUtils->updateQSStockBS(intval($lineContents[5]),0,0,0,$productEntity,$context);
                                         $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
                                     break;
                                     default:
@@ -905,20 +905,15 @@ class OrderInterfaceController extends AbstractController
                                 }
                             }
                         break;
-                        default:
-                            $filecontents = file_get_contents($path . $filename);
-                            $fileContentsByLine = explode(PHP_EOL,$filecontents);       
-                            foreach ($fileContentsByLine as $contentLine) {
-                                $lineContents = explode(';', $contentLine);
-                            }
+                        default:  
                         break;
                     }
             }
         }
-        $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished,'ReceivedStatusReply/Bestand/');
+        // $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished,'ReceivedStatusReply/Bestand/');
         return new Response('',Response::HTTP_NO_CONTENT);
     }
-
+    
     /**
      * @Route("/api/v{version}/_action/as-order-interface/healthPing", name="api.custom.as_order_interface.healthPing", methods={"POST"})
      * @param Context $context;

@@ -92,15 +92,6 @@ class OrderInterfaceUtils
         file_put_contents($filePath,$fileContent);
         return $filePath;
     }
-    /* Returns a specific product defined by the articleNumber */
-    public function getProduct(EntityRepositoryInterface $productRepository, string $articleNumber, Context $context): ?ProductEntity
-    {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('productNumber', $articleNumber));
-
-        $searchResult = $productRepository->search($criteria,$context);
-        return $searchResult->first();
-    }
 
     /* Returns an array with all saved order line items associated to the given orderID */
     public function getOrderedProducts(string $orderID, Context $context): array
@@ -280,23 +271,16 @@ class OrderInterfaceUtils
         ], $context);
     } 
 
-    public function updateQSStockBS(int $faulty, int $postprocessing, int $other, int $clarification, string $articleNumber, Context $context)
+    public function updateQSStockBS(int $faulty, int $postprocessing, int $other, int $clarification, ProductEntity $productEntity, Context $context)
     {
-        /** @var EntityRepositoryInterface $productRepository */
-        $productRepository = $this->container->get('product.repository');
         /** @var EntityRepositoryInterface $stockQSRepository */
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
 
-        $productEntity = $this->getProduct($productRepository, $articleNumber, $context);
         $productID = $productEntity->getId();
 
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('productId',$productID));
-        
         /** @var EntitySearchResult $searchResult */
-        $searchResult = null;
-        
-        $searchResult = $stockQSRepository->search($criteria,$context);
+        $searchResult = $this->getFilteredEntitiesOfRepository($stockQSRepository, 'productId', $productID, $context);
+
         if(count($searchResult) == 0)
         {
             // generate new entry
@@ -311,9 +295,6 @@ class OrderInterfaceUtils
         }
         else
         {
-            // update entry
-            $entry = $searchResult->first();
-
             /** @var OrderInterfaceStockQSEntity $stockQSEntity */
             $stockQSEntity = $searchResult->first();
             $currentFaulty = $stockQSEntity->getFaulty();
@@ -322,7 +303,7 @@ class OrderInterfaceUtils
             $currentOther = $stockQSEntity->getOther();
             
             $stockQSRepository->update([
-                ['id' => $entry->getId(), 
+                ['id' => $stockQSEntity->getId(), 
                 'productId' => $productID, 
                 'faulty' => $currentFaulty + $faulty, 
                 'clarification' => $currentClarification + $clarification, 
