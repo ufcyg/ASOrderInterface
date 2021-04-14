@@ -59,6 +59,59 @@ class OrderInterfaceUtils
         return $previous;
     }
 
+    public function generateFolderStructure()
+    {
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData', 0777, true);
+        }
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive', 0777, true);
+        }
+        
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/Articlebase')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/Articlebase', 0777, true);
+        }
+
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/SubmittedOrders')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/SubmittedOrders', 0777, true);
+        }
+
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply', 0777, true);
+        }
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply', 0777, true);
+        }
+
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/Artikel_Error')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/Artikel_Error', 0777, true);
+        }
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/Artikel_Error')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/Artikel_Error', 0777, true);
+        }
+
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/RM_WA')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/RM_WA', 0777, true);
+        }
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/RM_WA')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/RM_WA', 0777, true);
+        }
+
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/RM_WE')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/RM_WE', 0777, true);
+        }
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/RM_WE')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/RM_WE', 0777, true);
+        }
+
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/Bestand')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/Bestand', 0777, true);
+        }
+        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/Bestand')) {
+            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/Bestand', 0777, true);
+        }
+    }
+
     /* Creates a timeStamp that will be attached to the end of the filename */
     public function createShortDateFromString(string $daytime): string
     {
@@ -330,7 +383,7 @@ class OrderInterfaceUtils
         {
             if($faulty < 0 || $clarification < 0 || $postprocessing < 0 || $other < 0)
             {
-                $this->sendErrorNotification('QSK error','major error, check logs.<br>A new stock qs entry tried to be created with negative values.', ['']);
+                $this->sendErrorNotification('QSK error','major error, check logs.<br>A new stock qs entry tried to be created with negative values.', [''], false);
                 return;
             }
             $stockQSRepository->create([
@@ -369,17 +422,22 @@ class OrderInterfaceUtils
             );
             if($newStockValue < 0)
             {
-                $this->sendErrorNotification('QSK error','New stockvalue is below 0, check logs and data' . $product->getProductNumber(),['']);
+                $this->sendErrorNotification('QSK error','New stockvalue is below 0, check logs and data' . $product->getProductNumber(),[''], false);
             }
         }
     }
 
     /* Sends an eMail to every entry in the plugin configuration inside the administration frontend */
-    public function sendErrorNotification(string $errorSubject, string $errorMessage, array $fileArray)
+    public function sendErrorNotification(string $errorSubject, string $errorMessage, array $fileArray, bool $critical)
     {
         $notificationSalesChannel = $this->systemConfigService->get('ASOrderInterface.config.fallbackSaleschannelNotification');
 
-        $recipientList = $this->systemConfigService->get('ASOrderInterface.config.errorNotificationRecipients');
+        if($critical){
+            $recipientList = $this->systemConfigService->get('ASOrderInterface.config.systemErrorNotificationRecipients');
+        }else{
+            $recipientList = $this->systemConfigService->get('ASOrderInterface.config.errorNotificationRecipients');
+        }
+        
         $recipientData = explode(';', $recipientList);
         $recipients = null;
         for ($i = 0; $i< count($recipientData); $i +=2 )
@@ -457,7 +515,8 @@ class OrderInterfaceUtils
             }            
         }
         // $this->sendErrorNotification("Archive Files from ${from}","Deleting: ${dir}",['']);
-        $this->deleteFiles($dir);     
+        $this->deleteFiles($dir);   
+        $this->tidyUpArchive($this->folderRoot . 'Archive');  
     }
 
     public function getAllEntitiesOfRepository(EntityRepositoryInterface $repository, Context $context): ?EntitySearchResult
@@ -491,5 +550,53 @@ class OrderInterfaceUtils
         $searchResult = $repository->search($criteria, $context);
         
         return count($searchResult) != 0 ? true : false;
+    }
+    public function tidyUpArchive($path)
+    {
+        $this->deleteEmptyFolders($path . '/SubmittedOrders');
+        $this->deleteEmptyFolders($path . '/Articlebase');
+        $this->deleteEmptyFolders($path . '/ReceivedStatusReply//RM_WE');
+        $this->deleteEmptyFolders($path . '/ReceivedStatusReply//RM_WA');
+        $this->deleteEmptyFolders($path . '/ReceivedStatusReply//Bestand');
+        $this->deleteEmptyFolders($path . '/ReceivedStatusReply//Artikel_Error');
+    }
+    private function deleteEmptyFolders($path)
+    {
+        $file = '';
+        $remove = false;
+        $empty=true;
+        foreach (glob($path.DIRECTORY_SEPARATOR."*") as $file) {
+            $empty &= is_dir($file) && $this->deleteEmptyFolders($file);
+        }
+        if($empty)
+            $remove = true;
+        if($this->isBaseFolder($file))
+            $remove = false;
+        if($remove)
+            rmdir($path);
+
+        return $remove;
+    }
+    private function isBaseFolder($file): bool
+    {
+        if($file = '')
+            return false;
+
+        $fileExploded = explode('/', $file);
+        $fileName = $fileExploded[count($fileExploded)-1];
+
+        if(
+            $fileName == 'SubmittedOrders' ||
+            $fileName == 'Articlebase' ||
+            $fileName == 'ReceivedStatusReply' ||
+            $fileName == 'RM_WE' ||
+            $fileName == 'RM_WA' ||
+            $fileName == 'Bestand' ||
+            $fileName == 'Artikel_Error'
+        )
+        {
+            return true;
+        }
+        return false;
     }
 }

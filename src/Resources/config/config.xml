@@ -88,6 +88,16 @@
             <helpText lang="de-DE">Geben Sie beliebig viele Empfänger für Fehlerbenachrichtigungen in valider Form ein: NAME TRENNZEICHEN(;) MAILADRESSE.</helpText>
         </input-field>
 
+        <input-field>
+            <name>systemErrorNotificationRecipients</name>
+            <label>Name and Mail of recipients of critical system error notifications</label>
+            <label lang="de-DE">Name und Mailadresse der Empfänger von kritischen Systemfehlermeldungen</label>          
+            <placeholder>John Doe;john.doe@john.doe</placeholder>
+            <placeholder lang="de-DE">Max Mustermann;mustermann@muster.man</placeholder>
+            <helpText>Input as many recipients as needed in valid formation: NAME DELIMITER(;) MAIL</helpText>
+            <helpText lang="de-DE">Geben Sie beliebig viele Empfänger für Fehlerbenachrichtigungen in valider Form ein: NAME TRENNZEICHEN(;) MAILADRESSE.</helpText>
+        </input-field>
+
         <component name="sw-entity-single-select">
             <name>fallbackSaleschannelNotification</name>
             <entity>sales_channel</entity>

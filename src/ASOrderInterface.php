@@ -32,55 +32,9 @@ class ASOrderInterface extends Plugin
     /** @inheritDoc */
     public function install(InstallContext $installContext): void
     {
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData', 0777, true);
-        }
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive', 0777, true);
-        }
-        
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/Articlebase')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/Articlebase', 0777, true);
-        }
-
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/SubmittedOrders')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/SubmittedOrders', 0777, true);
-        }
-
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply', 0777, true);
-        }
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply', 0777, true);
-        }
-
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/Artikel_Error')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/Artikel_Error', 0777, true);
-        }
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/Artikel_Error')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/Artikel_Error', 0777, true);
-        }
-
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/RM_WA')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/RM_WA', 0777, true);
-        }
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/RM_WA')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/RM_WA', 0777, true);
-        }
-
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/RM_WE')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/RM_WE', 0777, true);
-        }
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/RM_WE')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/RM_WE', 0777, true);
-        }
-
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/Bestand')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/ReceivedStatusReply/Bestand', 0777, true);
-        }
-        if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/Bestand')) {
-            mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/ReceivedStatusReply/Bestand', 0777, true);
-        }
+        /** @var OrderInterfaceController $orderInterfaceController */
+        $orderInterfaceController = $this->container->get('ASOrderInterface\Core\Api\OrderInterfaceController');
+        $orderInterfaceController->generateFolderStructure($installContext->getContext());
     }
 
     /** @inheritDoc */

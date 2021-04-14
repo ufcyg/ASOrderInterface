@@ -254,29 +254,29 @@ class OrderInterfaceController extends AbstractController
                     if($order == null)
                     {// wrong kind of file has been read, notify administration and prevent deletion of files
                         $deleteFilesWhenFinished = false;
-                        $this->oiUtils->sendErrorNotification('MAJOR ERROR','Major error occured.<br>Received reply for non existant order. Received filename:<br>' . $filename, [$path . $filename]);
+                        $this->oiUtils->sendErrorNotification('MAJOR ERROR','Major error occured.<br>Received reply for non existant order. Received filename:<br>' . $filename, [$path . $filename], false);
                         continue;
                     }
                     switch ($filenameContents[2])
                     {
                         case '003': // order cannot be changed (already packed, shipped, cancelled)
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WA Status 003','Status 003 "order cannot be changed (already packed, shipped, cancelled)" for order<br>' . $order->getOrderNumber(), [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WA Status 003','Status 003 "order cannot be changed (already packed, shipped, cancelled)" for order<br>' . $order->getOrderNumber(), [$path . $filename], false);
                         break;
                         case '005': // cannot be cancelled because never created
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WA Status 005','Status 005 "cannot be cancelled because already processed or cancelled" for order<br>' . $order->getOrderNumber(), [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WA Status 005','Status 005 "cannot be cancelled because already processed or cancelled" for order<br>' . $order->getOrderNumber(), [$path . $filename], false);
                         break;
                         case '006': // cannot be cancelled because already processed or cancelled
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WA Status 006','Status 006 "cannot be cancelled because already processed or cancelled" for order<br>' . $order->getOrderNumber(), [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WA Status 006','Status 006 "cannot be cancelled because already processed or cancelled" for order<br>' . $order->getOrderNumber(), [$path . $filename], false);
                         break;
                         case '007': // order changed
-                            $this->oiUtils->sendErrorNotification('RM_WA Status 007','Status 007 "order successfully changed" for order<br>' . $order->getOrderNumber(), [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WA Status 007','Status 007 "order successfully changed" for order<br>' . $order->getOrderNumber(), [$path . $filename], false);
                         break;
                         case '009': // minor error in order
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WA Status 009','Status 009 "minor error in order" for order<br>' . $order->getOrderNumber(), [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WA Status 009','Status 009 "minor error in order" for order<br>' . $order->getOrderNumber(), [$path . $filename], false);
                         break;
                         case '010': // order sucessfully imported to rieck LFS
                             $result = $this->oiOrderServiceUtils->updateOrderStatus($order, $order->getId(), 'process');
@@ -286,11 +286,11 @@ class OrderInterfaceController extends AbstractController
                         break;
                         case '999': // major error (file doesn't meet the expectations, e.g. unfitting fieldlengths, fieldformats, missing necessary fields)
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('MAJOR ERROR','Major error occured.<br>One or more submitted files did not meet expectations and been rejected.', [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('MAJOR ERROR','Major error occured.<br>One or more submitted files did not meet expectations and been rejected.', [$path . $filename], false);
                         break;
                         default:
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('MAJOR ERROR','Major error occured.<br>File could not be recognized.', [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('MAJOR ERROR','Major error occured.<br>File could not be recognized.', [$path . $filename], false);
                         break;
                     }
                     continue;
@@ -319,7 +319,7 @@ class OrderInterfaceController extends AbstractController
                     $result = $this->oiOrderServiceUtils->updateOrderStatus($order, $order->getId(), 'cancel');
                     if($result)
                     {
-                        $this->oiUtils->sendErrorNotification('Order cancelled by logistics partner','Order<br>' . $order->getOrderNumber() . '<br>has been cancelled by logistics partner.<br>Communication needed.', [$path . $filename]);
+                        $this->oiUtils->sendErrorNotification('Order cancelled by logistics partner','Order<br>' . $order->getOrderNumber() . '<br>has been cancelled by logistics partner.<br>Communication needed.', [$path . $filename], false);
                     }
                 }
                 else if ($filenameContents[1] === 'VLE') // packages loaded, we will have the tracking numbers and add them to the orderdelivery repository datafield
@@ -396,7 +396,7 @@ class OrderInterfaceController extends AbstractController
                                             Context::createDefaultContext()
                                         );
                                     }
-                                    $this->oiUtils->sendErrorNotification('Order deviation VLE', 'Rieck was not able to pack enough product.<br>EntryID: ' . $x, [$path . $filename]);
+                                    $this->oiUtils->sendErrorNotification('Order deviation VLE', 'Rieck was not able to pack enough product.<br>EntryID: ' . $x, [$path . $filename], false);
                                 }
                             }
                         }
@@ -462,35 +462,35 @@ class OrderInterfaceController extends AbstractController
                     {
                         case '001': //WEAvis couldn't be created
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WE Status 001','Status 001 "WEAvis could not be created" for order<br>' . $filenameContents[3], [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WE Status 001','Status 001 "WEAvis could not be created" for order<br>' . $filenameContents[3], [$path . $filename], false);
                         break;
                         case '005': //WEAvis cannot be cancelled due to being not existant, already processed or cancelled
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WE Status 005','Status 005 "WEAvis cannot be cancelled due to being not existant, already processed or cancelled" for order<br>' . $filenameContents[3], [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WE Status 005','Status 005 "WEAvis cannot be cancelled due to being not existant, already processed or cancelled" for order<br>' . $filenameContents[3], [$path . $filename], false);
                         break;
                         case '007': //WEAvis change processed
                             // $this->sendErrorNotification('RM_WE Status 007','Status 007 "WEAvis could not be created" for order ' . $filenameContents[3]);
                         break;
                         case '009': //WEAvis could not be processed, errors inside WEAvis
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WE Status 009','Status 009 "WEAvis could not be processed, errors inside WEAvis" for order<br>' . $filenameContents[3], [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WE Status 009','Status 009 "WEAvis could not be processed, errors inside WEAvis" for order<br>' . $filenameContents[3], [$path . $filename], false);
                         break;
                         case '010': //WEAvis processed
                             // $this->sendErrorNotification('RM_WE Status 010','Status 010 "WEAvis could not be created" for order ' . $filenameContents[3]);
                         break;
                         case '999': //WEAvis message could not be processed, out of specification
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WE Status 999','Status 999 "WEAvis message could not be processed, out of specification" for order<br>' . $filenameContents[3], [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WE Status 999','Status 999 "WEAvis message could not be processed, out of specification" for order<br>' . $filenameContents[3], [$path . $filename], false);
                         break;
                         default:
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WE Status unknown','unkown status reported', [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WE Status unknown','unkown status reported', [$path . $filename], false);
                         break;
                     }
                 }
                 else if($filenameContents[1] == 'ERROR')
                 {
-                    $this->oiUtils->sendErrorNotification('RM_WE Status ERROR','Unknown Error reported', [$path . $filename]);
+                    $this->oiUtils->sendErrorNotification('RM_WE Status ERROR','Unknown Error reported', [$path . $filename], false);
                 }
                 else if($filenameContents[1] == 'WKE')
                 {
@@ -520,7 +520,7 @@ class OrderInterfaceController extends AbstractController
                         if($amount != $amountAvailable)
                         {
                             $deleteFilesWhenFinished = false;
-                            $this->oiUtils->sendErrorNotification('RM_WE WKE','Damaged or otherwise unusable products reported at position:<br> ' . $j . '<br><br>Check back with logistics partner to keep stock information up to date.', [$path . $filename]);
+                            $this->oiUtils->sendErrorNotification('RM_WE WKE','Damaged or otherwise unusable products reported at position:<br> ' . $j . '<br><br>Check back with logistics partner to keep stock information up to date.', [$path . $filename], false);
                         }
                     }
                 }
@@ -564,7 +564,7 @@ class OrderInterfaceController extends AbstractController
                     $filename = $files[$i];
                     $filecontents = $filename . '|||' . $filecontents . file_get_contents($path . $filename);
                 }
-                $this->oiUtils->sendErrorNotification('Error: Article base','Error reported by logistics partner, submitted article base contains errors check logfile for further informations.', [$path . $filename]);
+                $this->oiUtils->sendErrorNotification('Error: Article base','Error reported by logistics partner, submitted article base contains errors check logfile for further informations.', [$path . $filename], false);
             }
         }
         $this->oiUtils->archiveFiles($path,false,'ReceivedStatusReply/Artikel_Error/');
@@ -627,7 +627,7 @@ class OrderInterfaceController extends AbstractController
                                     continue;
                                 }
                                 $deleteFilesWhenFinished = false;
-                                $this->oiUtils->sendErrorNotification('QSK', 'Change in quality status. EntryID: ' . $entryID, [$path . $filename]);
+                                $this->oiUtils->sendErrorNotification('QSK', 'Change in quality status. EntryID: ' . $entryID, [$path . $filename], false);
                                 switch($lineContents[7])
                                 {
                                     case 'KL': // klärfall / clarification
@@ -766,7 +766,7 @@ class OrderInterfaceController extends AbstractController
                                 $productEntity = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('product.repository'), 'productNumber', $productNumber, $context)->first();
                                 if($productEntity == null)
                                 {
-                                    $this->oiUtils->sendErrorNotification('Stock feedback contains unknown product', 'A product mentioned in the daily stock feedback report is unkown.<br>Please check the stock feedback at line ' . $y, [$path . $filename]);
+                                    $this->oiUtils->sendErrorNotification('Stock feedback contains unknown product', 'A product mentioned in the daily stock feedback report is unkown.<br>Please check the stock feedback at line ' . $y, [$path . $filename], false);
                                     continue;
                                 }
 
@@ -805,7 +805,7 @@ class OrderInterfaceController extends AbstractController
                                 if($discrepancy)
                                 {
                                     $deleteFilesWhenFinished = false;
-                                    $this->oiUtils->sendErrorNotification('Stock Feedback Discrepancy','Discrepancies found in stock feedback check logfile for further informations.<br>Articlenumber: ' . $productNumber . "<br>Discrepancy: " . $discrepancyValue, [$path . $filename]);
+                                    $this->oiUtils->sendErrorNotification('Stock Feedback Discrepancy','Discrepancies found in stock feedback check logfile for further informations.<br>Articlenumber: ' . $productNumber . "<br>Discrepancy: " . $discrepancyValue, [$path . $filename], false);
                                 }
                             }                       
                         break;
@@ -830,22 +830,22 @@ class OrderInterfaceController extends AbstractController
                                     case 'KL': // klärfall / clarification
 
                                         $this->oiUtils->updateQSStockBS(0,0,0,intval($lineContents[5]),$productEntity,$context);
-                                        $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
+                                        $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename], false);
                                     break;
                                     case 'NB': // Nachbearbeitung / postprocessing
                                         
                                         $this->oiUtils->updateQSStockBS(0,intval($lineContents[5]),0,0,$productEntity,$context);
-                                        $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
+                                        $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename], false);
                                     break;
                                     case 'SO': // Sonstige / other
                                         
                                         $this->oiUtils->updateQSStockBS(0,0,intval($lineContents[5]),0,$productEntity,$context);
-                                        $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
+                                        $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename], false);
                                     break;
                                     case 'DF': // Defekt // faulty
                                         
                                         $this->oiUtils->updateQSStockBS(intval($lineContents[5]),0,0,0,$productEntity,$context);
-                                        $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
+                                        $this->oiUtils->sendErrorNotification('Stock Addition','Products added, clarification needed. EntryID: ' . $entryID, [$path . $filename], false);
                                     break;
                                     default:
                                         $current = $productEntity->getStock();
@@ -878,22 +878,22 @@ class OrderInterfaceController extends AbstractController
                                     case 'KL': // klärfall / clarification
                                         
                                         $this->oiUtils->updateQSStockBS(0,0,0,intval($lineContents[5]),$productEntity,$context);
-                                        $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
+                                        $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename], false);
                                     break;
                                     case 'NB': // Nachbearbeitung / postprocessing
                                         
                                         $this->oiUtils->updateQSStockBS(0,intval($lineContents[5]),0,0,$productEntity,$context);
-                                        $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
+                                        $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename], false);
                                     break;
                                     case 'SO': // Sonstige / other
                                         
                                         $this->oiUtils->updateQSStockBS(0,0,intval($lineContents[5]),0,$productEntity,$context);
-                                        $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
+                                        $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename], false);
                                     break;
                                     case 'DF': // Defekt // faulty
                                         
                                         $this->oiUtils->updateQSStockBS(intval($lineContents[5]),0,0,0,$productEntity,$context);
-                                        $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename]);
+                                        $this->oiUtils->sendErrorNotification('Stock Subtraction','Products removed, clarification needed. EntryID: ' . $entryID, [$path . $filename], false);
                                     break;
                                     default:
                                         $current = $productEntity->getStock();
@@ -921,8 +921,10 @@ class OrderInterfaceController extends AbstractController
      */
     public function healthPing(Context $context)
     {
+        /** @var EntityRepositoryInterface $scheduledTaskRepository */
+        $scheduledTaskRepository = $this->container->get('scheduled_task.repository');
         /** @var EntitySearchResult $scheduledTasks */
-        $scheduledTasks = $this->oiUtils->getAllEntitiesOfRepository($this->container->get('scheduled_task.repository'), $context);
+        $scheduledTasks = $this->oiUtils->getAllEntitiesOfRepository($scheduledTaskRepository, $context);
         /** @var ScheduledTaskEntity $scheduledTask */
         foreach($scheduledTasks as $taskID => $scheduledTask)
         {
@@ -932,7 +934,14 @@ class OrderInterfaceController extends AbstractController
                 
             if($scheduledTask->getStatus() == 'failed')
             {
-                $this->oiUtils->sendErrorNotification('Scheduled Task Failed', "Task $scheduledTaskName has failed.<br>Check dead messages for further informations.", ['']);
+                $this->oiUtils->sendErrorNotification('Scheduled Task Failed', "Task $scheduledTaskName has failed.<br>Check dead messages for further informations.", [''], true);
+                $scheduledTaskRepository->update([
+                    [
+                    'id' => $taskID,
+                    'status'=> 'scheduled'
+                    ]
+                ],
+                $context);
             }
         }
 
@@ -982,5 +991,30 @@ class OrderInterfaceController extends AbstractController
 
         return new Response('',Response::HTTP_NO_CONTENT);
     }
-    
+
+    /**
+     * @Route("/api/v{version}/_action/as-order-interface/generateFolderStructure", name="api.custom.as_order_interface.generateFolderStructure", methods={"POST"})
+     * @param Context $context;
+     * @return Response
+     */
+    public function generateFolderStructure(Context $context)
+    {
+        $this->oiUtils->generateFolderStructure();
+        
+        return new Response('',Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * @Route("/api/v{version}/_action/as-order-interface/cleanArchive", name="api.custom.as_order_interface.cleanArchive", methods={"POST"})
+     * @param Context $context;
+     * @return Response
+     */
+    public function cleanArchive(Context $context)
+    {
+        $path = $this->systemConfigService->get('ASOrderInterface.config.workingDirectory');
+
+        $this->oiUtils->tidyUpArchive($path . 'Archive');
+
+        return new Response('',Response::HTTP_NO_CONTENT);
+    }
 }
