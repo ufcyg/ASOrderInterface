@@ -26,6 +26,9 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Pricing\Price;
 use Shopware\Core\Framework\MessageQueue\ScheduledTask\ScheduledTaskEntity;
 use ASOrderInterface\Core\Content\StockQS\OrderInterfaceStockQSEntity;
+use Shopware\Core\Checkout\Order\OrderStates;
+use Shopware\Core\System\StateMachine\Aggregation\StateMachineState\StateMachineStateEntity;
+use Shopware\Core\System\StateMachine\StateMachineEntity;
 
 /**
  * @RouteScope(scopes={"api"})
@@ -146,8 +149,20 @@ class OrderInterfaceController extends AbstractController
      */
     public function submitOrders(Context $context): ?Response
     {
+        $orderOpenStateID = '';
+        /** @var StateMachineEntity $orderStateMachine */
+        $orderStateMachine = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('state_machine.repository'), 'technicalName', 'order.state', $context)->first();
+        /** @var EntitySearchResult $orderStates */
+        $orderStates = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('state_machine_state.repository'), 'stateMachineId', $orderStateMachine->getId(), $context);
+        foreach($orderStates as $orderStateID => $orderState)
+        {/** @var StateMachineStateEntity $orderState */
+            if($orderState->getTechnicalName() == "open")
+            {
+                $orderOpenStateID = $orderStateID;
+            }
+        }
         /** @var EntitySearchResult $orders */
-        $orders = $this->oiUtils->getAllEntitiesOfRepository($this->container->get('order.repository'), $context);
+        $orders = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('order.repository'), 'stateId', $orderOpenStateID, $context);
         if($orders == null){
             return new Response('',Response::HTTP_NO_CONTENT);
         }
@@ -171,6 +186,9 @@ class OrderInterfaceController extends AbstractController
                     continue;
                 }
                 $fileContent = $this->generateOrderContent($order, true, $context);
+            }
+            else{
+                continue;
             }
             $folderPath = $this->oiUtils->createTodaysFolderPath('Archive/SubmittedOrders', $timeStamp);
             $filePath = $this->oiUtils->writeOrder($order->getOrderNumber(), $folderPath, $fileContent, $this->companyID);
@@ -1000,7 +1018,7 @@ class OrderInterfaceController extends AbstractController
     public function generateFolderStructure(Context $context)
     {
         $this->oiUtils->generateFolderStructure();
-        
+
         return new Response('',Response::HTTP_NO_CONTENT);
     }
 
