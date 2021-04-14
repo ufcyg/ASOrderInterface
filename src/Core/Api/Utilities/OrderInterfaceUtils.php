@@ -555,10 +555,7 @@ class OrderInterfaceUtils
     {
         $this->deleteEmptyFolders($path . '/SubmittedOrders');
         $this->deleteEmptyFolders($path . '/Articlebase');
-        $this->deleteEmptyFolders($path . '/ReceivedStatusReply//RM_WE');
-        $this->deleteEmptyFolders($path . '/ReceivedStatusReply//RM_WA');
-        $this->deleteEmptyFolders($path . '/ReceivedStatusReply//Bestand');
-        $this->deleteEmptyFolders($path . '/ReceivedStatusReply//Artikel_Error');
+        $this->deleteEmptyFolders($path . '/ReceivedStatusReply');
     }
     private function deleteEmptyFolders($path)
     {
@@ -570,7 +567,7 @@ class OrderInterfaceUtils
         }
         if($empty)
             $remove = true;
-        if($this->isBaseFolder($file))
+        if($this->isBaseFolder($path))
             $remove = false;
         if($remove)
             rmdir($path);
@@ -579,7 +576,7 @@ class OrderInterfaceUtils
     }
     private function isBaseFolder($file): bool
     {
-        if($file = '')
+        if($file == '')
             return false;
 
         $fileExploded = explode('/', $file);
