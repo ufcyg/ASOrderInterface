@@ -26,7 +26,6 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Pricing\Price;
 use Shopware\Core\Framework\MessageQueue\ScheduledTask\ScheduledTaskEntity;
 use ASOrderInterface\Core\Content\StockQS\OrderInterfaceStockQSEntity;
-use Shopware\Core\Checkout\Order\OrderStates;
 use Shopware\Core\System\StateMachine\Aggregation\StateMachineState\StateMachineStateEntity;
 use Shopware\Core\System\StateMachine\StateMachineEntity;
 
@@ -769,7 +768,8 @@ class OrderInterfaceController extends AbstractController
                             }
 
                             $productCount = count($condensedArray) / 5; // amount of entries in the condensed array divided by the amount of unique entries per product
-
+                            $errorMessage = 'Discrepancies found in stock feedback check logfile for further informations.<br>';
+                            $errorMessage .= 'Calculation: Shopvalue - Reportvalue = Discrepancy<br><br>';
                             for($y = 0; $y < $productCount; $y++)
                             {
                                 $productNumber = $uniqueProductNumbers[$y];
@@ -823,9 +823,12 @@ class OrderInterfaceController extends AbstractController
                                 if($discrepancy)
                                 {
                                     $deleteFilesWhenFinished = false;
-                                    $this->oiUtils->sendErrorNotification('Stock Feedback Discrepancy','Discrepancies found in stock feedback check logfile for further informations.<br>Articlenumber: ' . $productNumber . "<br>Discrepancy: " . $discrepancyValue, [$path . $filename], false);
+                                    $errorMessage .= 'Articlenumber: ' . $productNumber . "<br>Discrepancy: " . $discrepancyValue;
+                                    $errorMessage .= '<br>---<br>';
                                 }
-                            }                       
+                            }       
+                            $this->oiUtils->sendErrorNotification('Stock Feedback Discrepancy', $errorMessage, [$path . $filename], false);
+                                                
                         break;
                         case 'BS+': // addition of currently available items (items lost but found, etc.)
                             foreach ($fileContentsByLine as $entryID => $contentLine) {
@@ -928,7 +931,7 @@ class OrderInterfaceController extends AbstractController
                     }
             }
         }
-        // $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished,'ReceivedStatusReply/Bestand/');
+        $this->oiUtils->archiveFiles($path,$deleteFilesWhenFinished,'ReceivedStatusReply/Bestand/');
         return new Response('',Response::HTTP_NO_CONTENT);
     }
     
