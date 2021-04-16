@@ -200,6 +200,7 @@ class OrderInterfaceController extends AbstractController
     /* Extracts all necessary data of the order for the logistics partner throught the CSVFactory */
     public function generateOrderContent(OrderEntity $order, bool $orderCancelled, $context): string
     {
+        $orderContent = '';
         // init exportData variable, this will contain the billing/delivery address aswell as every line item of the order
         $exportData = [];
         /** @var string $orderID */
@@ -219,7 +220,7 @@ class OrderInterfaceController extends AbstractController
                 continue;
             }
             array_push($exportData, $orderLineItem); // adding the lineitems to $exportData variable
-            $orderContent = $this->csvFactory->generateDetails($exportData, $order->getOrderNumber(), $i, '', $orderCancelled, $context); 
+            $orderContent .= $this->csvFactory->generateDetails($exportData, $order->getOrderNumber(), $i, '', $orderCancelled, $context); 
             $i++;
         }
         $fileContent = $this->csvFactory->generateHeader($exportData, $order->getOrderNumber(), '', $orderCustomerEntity->getCustomerId(), $context);
