@@ -72,23 +72,25 @@ class ASOrderInterface extends Plugin
             return;
         }
 
-        // Remove all traces of the plugin
         $dir = '../custom/plugins/ASOrderInterface/InterfaceData';
-        $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
-        $files = new RecursiveIteratorIterator($it,
-             RecursiveIteratorIterator::CHILD_FIRST);
-        foreach($files as $file) 
-        {
-            if ($file->isDir())
+        if (file_exists($dir)) {
+            // Remove all traces of the plugin
+            $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+            $files = new RecursiveIteratorIterator($it,
+                RecursiveIteratorIterator::CHILD_FIRST);
+            foreach($files as $file) 
             {
-                rmdir($file->getRealPath());
+                if ($file->isDir())
+                {
+                    rmdir($file->getRealPath());
+                }
+                else 
+                {
+                    unlink($file->getRealPath());
+                }
             }
-            else 
-            {
-                unlink($file->getRealPath());
-            }
-        }
-        rmdir($dir);
+            rmdir($dir);
+        }        
 
         $connection = $this->container->get(Connection::class);
 
