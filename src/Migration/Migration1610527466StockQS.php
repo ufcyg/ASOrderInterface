@@ -16,6 +16,8 @@ class Migration1610527466StockQS extends MigrationStep
     {
         $connection->exec("CREATE TABLE IF NOT EXISTS `as_stock_qs` (
             `id`                BINARY(16) NOT NULL,
+            `product_name`      VARCHAR(255) NOT NULL,
+            `product_number`    VARCHAR(255) NOT NULL,
             `product_id`        VARCHAR(255) NOT NULL,
             `faulty`            INTEGER NOT NULL,
             `clarification`     INTEGER NOT NULL,

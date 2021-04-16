@@ -8,7 +8,10 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityIdTrait;
 class OrderInterfaceStockQSEntity extends Entity
 {
     use EntityIdTrait;
-    
+    /** @var string */
+    protected $productName;
+    /** @var string */
+    protected $productNumber;
     /** @var string */
     protected $productId;
     /**  @var int */
@@ -20,19 +23,41 @@ class OrderInterfaceStockQSEntity extends Entity
     /** @var int */
     protected $other;
 
-    /**
-     * Get the value of productId
-     */ 
+    /** Get the value of productId */ 
+    public function getProductName()
+    {
+        return $this->productName;
+    }
+
+    /** Set the value of productId @return  self */ 
+    public function setProductName($productName)
+    {
+        $this->productName = $productName;
+
+        return $this;
+    }
+
+    /** Get the value of productId */ 
+    public function getProductNumber()
+    {
+        return $this->productNumber;
+    }
+
+    /** Set the value of productId @return  self */ 
+    public function setProductNumber($productNumber)
+    {
+        $this->productNumber = $productNumber;
+
+        return $this;
+    }
+
+    /** Get the value of productId */ 
     public function getProductId()
     {
         return $this->productId;
     }
 
-    /**
-     * Set the value of productId
-     *
-     * @return  self
-     */ 
+    /** Set the value of productId @return  self */ 
     public function setProductId($productId)
     {
         $this->productId = $productId;
@@ -40,19 +65,13 @@ class OrderInterfaceStockQSEntity extends Entity
         return $this;
     }
 
-    /**
-     * Get the value of faulty
-     */ 
+    /**Get the value of faulty */ 
     public function getFaulty()
     {
         return $this->faulty;
     }
 
-    /**
-     * Set the value of faulty
-     *
-     * @return  self
-     */ 
+    /** Set the value of faulty @return  self */ 
     public function setFaulty($faulty)
     {
         $this->faulty = $faulty;
@@ -60,19 +79,13 @@ class OrderInterfaceStockQSEntity extends Entity
         return $this;
     }
 
-    /**
-     * Get the value of clarification
-     */ 
+    /**Get the value of clarification */ 
     public function getClarification()
     {
         return $this->clarification;
     }
 
-    /**
-     * Set the value of clarification
-     *
-     * @return  self
-     */ 
+    /** Set the value of clarification @return  self */ 
     public function setClarification($clarification)
     {
         $this->clarification = $clarification;
@@ -80,19 +93,13 @@ class OrderInterfaceStockQSEntity extends Entity
         return $this;
     }
 
-    /**
-     * Get the value of postprocessing
-     */ 
+    /**Get the value of postprocessing */ 
     public function getPostprocessing()
     {
         return $this->postprocessing;
     }
 
-    /**
-     * Set the value of postprocessing
-     *
-     * @return  self
-     */ 
+    /** Set the value of postprocessing @return  self */  
     public function setPostprocessing($postprocessing)
     {
         $this->postprocessing = $postprocessing;
@@ -100,19 +107,13 @@ class OrderInterfaceStockQSEntity extends Entity
         return $this;
     }
 
-    /**
-     * Get the value of expiredMhd
-     */ 
+    /**Get the value of expiredMhd */ 
     public function getExpiredMhd()
     {
         return $this->expiredMhd;
     }
 
-    /**
-     * Set the value of expiredMhd
-     *
-     * @return  self
-     */ 
+    /** Set the value of expiredMhd @return  self */ 
     public function setExpiredMhd($expiredMhd)
     {
         $this->expiredMhd = $expiredMhd;
@@ -120,19 +121,13 @@ class OrderInterfaceStockQSEntity extends Entity
         return $this;
     }
 
-    /**
-     * Get the value of other
-     */ 
+    /**Get the value of other */ 
     public function getOther()
     {
         return $this->other;
     }
 
-    /**
-     * Set the value of other
-     *
-     * @return  self
-     */ 
+    /** Set the value of other @return  self */ 
     public function setOther($other)
     {
         $this->other = $other;
@@ -140,11 +135,3 @@ class OrderInterfaceStockQSEntity extends Entity
         return $this;
     }
 }
-
-// (new IdField('id','id'))->addFlags(new Required(), new PrimaryKey()) ,
-//                 new StringField('product_id','productId'),
-//                 new IntField('faulty','faulty'),
-//                 new IntField('clarification','clarification'),
-//                 new IntField('postprocessing','postprocessing'),
-//                 new IntField('expired_mhd','expiredMhd'),
-//                 new IntField('other','other')

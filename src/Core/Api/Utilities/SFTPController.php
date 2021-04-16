@@ -2,10 +2,8 @@
 
 namespace ASOrderInterface\Core\Api\Utilities;
 
-use ASMailService\Core\MailServiceHelper;
 use Exception;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Symfony\Component\HttpFoundation\Response;
 
 /*
 

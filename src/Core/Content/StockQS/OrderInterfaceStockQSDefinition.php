@@ -32,7 +32,9 @@ class OrderInterfaceStockQSDefinition extends EntityDefinition
     {
         return new FieldCollection(
             [
-                (new IdField('id','id'))->addFlags(new Required(), new PrimaryKey()) ,
+                (new IdField('id','id'))->addFlags(new Required(), new PrimaryKey()),
+                new StringField('product_name','productName'),
+                new StringField('product_number','productNumber'),
                 new StringField('product_id','productId'),
                 new IntField('faulty','faulty'),
                 new IntField('clarification','clarification'),

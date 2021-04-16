@@ -46,8 +46,6 @@ class OrderInterfaceController extends AbstractController
     private $companyID;
     /** @var OIOrderServiceUtils $oiOrderServiceUtils */
     private $oiOrderServiceUtils;
-    /** @var string $senderName */
-    private $senderName;
     /** @var ASControllingReportController $controllingReportController */
     private $controllingReportController;
     /** @var ASDispoControlController $dispoController */
@@ -68,7 +66,6 @@ class OrderInterfaceController extends AbstractController
         $this->oiUtils = $oiUtils;
         $this->companyID = $this->systemConfigService->get('ASOrderInterface.config.logisticsCustomerID');
         $this->oiOrderServiceUtils = $oiOrderServiceUtils;
-        $this->senderName = 'Order Interface';
 
         $this->controllingReportController = $controllingReportController;
         $this->dispoController = $dispoController;
@@ -980,11 +977,14 @@ class OrderInterfaceController extends AbstractController
         $data = null;
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
         $products = $this->oiUtils->getAllEntitiesOfRepository($this->container->get('product.repository'), $context);
+        /** @var ProductEntity $product */
         foreach($products as $productID => $product)
         {
             if(!$this->oiUtils->entityExistsInRepositoryCk($stockQSRepository, 'productId', $productID, $context)){
                 //add new entity because we havent found one
-                $data[] = [ 'productId' => $productID, 
+                $data[] = [ 'productName' => $product->getName(),
+                            'productNumber' => $product->getProductNumber(),
+                            'productId' => $productID, 
                             'faulty' => 0, 
                             'clarification' => 0, 
                             'postprocessing' => 0, 

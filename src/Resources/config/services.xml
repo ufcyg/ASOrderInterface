@@ -5,6 +5,19 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <service id="ASOrderInterface\Core\Api\OrderInterfaceController" public="true">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\CSVFactory" />
+            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\OrderInterfaceUtils" />
+            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\OIOrderServiceUtils" />
+            <argument type="service" id="ASControllingReport\Core\Api\ASControllingReportController" />
+            <argument type="service" id="ASDispositionControl\Core\Api\ASDispoControlController" />
+            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\SFTPController" />
+            <call method="setContainer">
+                <argument type="service" id="service_container" />
+            </call>
+        </service>
+        
         <service id="ASOrderInterface\Core\Api\Utilities\CSVFactory" public="true">    
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />  
             <argument id="ASOrderInterface\Core\Api\Utilities\OrderInterfaceUtils" type="service"/>
@@ -36,18 +49,7 @@
             <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderService" />
         </service>
 
-        <service id="ASOrderInterface\Core\Api\OrderInterfaceController" public="true">
-            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
-            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\CSVFactory" />
-            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\OrderInterfaceUtils" />
-            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\OIOrderServiceUtils" />
-            <argument type="service" id="ASControllingReport\Core\Api\ASControllingReportController" />
-            <argument type="service" id="ASDispositionControl\Core\Api\ASDispoControlController" />
-            <argument type="service" id="ASOrderInterface\Core\Api\Utilities\SFTPController" />
-            <call method="setContainer">
-                <argument type="service" id="service_container" />
-            </call>
-        </service>
+        
 
         <service id="ASOrderInterface\Subscriber\ProductEventSubscriber">
             <tag name="kernel.event_subscriber"/>

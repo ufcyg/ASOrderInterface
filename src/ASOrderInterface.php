@@ -32,9 +32,6 @@ class ASOrderInterface extends Plugin
     /** @inheritDoc */
     public function install(InstallContext $installContext): void
     {
-        /** @var OrderInterfaceController $orderInterfaceController */
-        $orderInterfaceController = $this->container->get('ASOrderInterface\Core\Api\OrderInterfaceController');
-        $orderInterfaceController->generateFolderStructure($installContext->getContext());
     }
 
     /** @inheritDoc */
@@ -57,6 +54,7 @@ class ASOrderInterface extends Plugin
     {
         /** @var OrderInterfaceController $orderInterfaceController */
         $orderInterfaceController = $this->container->get('ASOrderInterface\Core\Api\OrderInterfaceController');
+        $orderInterfaceController->generateFolderStructure($activateContext->getContext());
         $orderInterfaceController->initStockQS($activateContext->getContext());
     }
 
