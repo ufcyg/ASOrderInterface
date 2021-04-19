@@ -734,6 +734,7 @@ class OrderInterfaceController extends AbstractController
                             }
                         break;
                         case 'BESTAND': // Daily report of current available items
+                            $sendStockReport = false;
                             $uniqueProductNumbers = array();
                             $condensedArray = array();      
                             $prevValue = 0;
@@ -820,12 +821,14 @@ class OrderInterfaceController extends AbstractController
                                 }
                                 if($discrepancy)
                                 {
+                                    $sendStockReport = true;
                                     $deleteFilesWhenFinished = false;
                                     $errorMessage .= 'Articlenumber: ' . $productNumber . "<br>Discrepancy: " . $discrepancyValue;
                                     $errorMessage .= '<br>---<br>';
                                 }
                             }       
-                            $this->oiUtils->sendErrorNotification('Stock Feedback Discrepancy', $errorMessage, [$path . $filename], false);
+                            if($sendStockReport)
+                                $this->oiUtils->sendErrorNotification('Stock Feedback Discrepancy', $errorMessage, [$path . $filename], false);
                                                 
                         break;
                         case 'BS+': // addition of currently available items (items lost but found, etc.)
