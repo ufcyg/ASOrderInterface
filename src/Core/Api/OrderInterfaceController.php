@@ -783,7 +783,8 @@ class OrderInterfaceController extends AbstractController
                                 $productEntity = $this->oiUtils->getFilteredEntitiesOfRepository($this->container->get('product.repository'), 'productNumber', $productNumber, $context)->first();
                                 if($productEntity == null)
                                 {
-                                    $this->oiUtils->sendErrorNotification('Stock feedback contains unknown product', 'A product mentioned in the daily stock feedback report is unkown.<br>Please check the stock feedback at line ' . $y, [$path . $filename], false);
+                                    $index = $y +1;
+                                    $this->oiUtils->sendErrorNotification('Stock feedback contains unknown product', 'A product mentioned in the daily stock feedback report is unkown.<br>Please check the stock feedback at line ' . $index, [$path . $filename], false);
                                     continue;
                                 }
 
