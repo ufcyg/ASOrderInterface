@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace ASOrderInterface;
 
@@ -27,6 +29,7 @@ defined in the plugins configuration. Also normally local deleted files after ev
 kind occures.
 
 */
+
 class ASOrderInterface extends Plugin
 {
     /** @inheritDoc */
@@ -76,21 +79,19 @@ class ASOrderInterface extends Plugin
         if (file_exists($dir)) {
             // Remove all traces of the plugin
             $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
-            $files = new RecursiveIteratorIterator($it,
-                RecursiveIteratorIterator::CHILD_FIRST);
-            foreach($files as $file) 
-            {
-                if ($file->isDir())
-                {
+            $files = new RecursiveIteratorIterator(
+                $it,
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+            foreach ($files as $file) {
+                if ($file->isDir()) {
                     rmdir($file->getRealPath());
-                }
-                else 
-                {
+                } else {
                     unlink($file->getRealPath());
                 }
             }
             rmdir($dir);
-        }        
+        }
 
         $connection = $this->container->get(Connection::class);
 

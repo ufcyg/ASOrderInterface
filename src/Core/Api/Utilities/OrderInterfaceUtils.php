@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /*
 
@@ -39,16 +41,17 @@ class OrderInterfaceUtils
     private $senderName;
     /** @var ContainerInterface $container */
     protected $container;
-    
-    public function __construct(SystemConfigService $systemConfigService,
-                                MailServiceHelper $mailServiceHelper)
-    {
+
+    public function __construct(
+        SystemConfigService $systemConfigService,
+        MailServiceHelper $mailServiceHelper
+    ) {
         $this->systemConfigService = $systemConfigService;
         $this->mailServiceHelper = $mailServiceHelper;
         $this->senderName = 'Order Interface';
         $this->folderRoot = $this->systemConfigService->get('ASOrderInterface.config.workingDirectory');
     }
-    
+
 
     /** @internal @required */
     public function setContainer(ContainerInterface $container): ?ContainerInterface
@@ -67,7 +70,7 @@ class OrderInterfaceUtils
         if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive')) {
             mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive', 0777, true);
         }
-        
+
         if (!file_exists('../custom/plugins/ASOrderInterface/InterfaceData/Archive/Articlebase')) {
             mkdir('../custom/plugins/ASOrderInterface/InterfaceData/Archive/Articlebase', 0777, true);
         }
@@ -124,16 +127,16 @@ class OrderInterfaceUtils
     }
 
     /* Creates a path according to the input $path and the preset folderRoot combined with todays date */
-    public function createTodaysFolderPath($path, &$timeStamp):string
+    public function createTodaysFolderPath($path, &$timeStamp): string
     {
         $timeStamp = new DateTime();
         $timeStamp = $timeStamp->format('d-m-Y');
-         
+
         return $this->folderRoot . $path . '/' . $timeStamp;
     }
 
     /* Writes the current order to disc with a unique name depending on the orderID */
-    public function writeOrder(string $orderNumber,string $folderPath, string $fileContent, string $companyID): string
+    public function writeOrder(string $orderNumber, string $folderPath, string $fileContent, string $companyID): string
     {
         $folderPath = $folderPath . '/' . $orderNumber . '/';
 
@@ -142,7 +145,7 @@ class OrderInterfaceUtils
         }
 
         $filePath = $folderPath . $companyID . '-' . $orderNumber . '-order.csv';
-        file_put_contents($filePath,$fileContent);
+        file_put_contents($filePath, $fileContent);
         return $filePath;
     }
 
@@ -150,11 +153,10 @@ class OrderInterfaceUtils
     public function getOrderedProducts(string $orderID, Context $context): array
     {
         /** @var EntitySearchResult $lineItemEntity */
-        $lineItemEntity = $this->getFilteredEntitiesOfRepository($this->container->get('order_line_item.repository'),'orderId',$orderID,$context);
+        $lineItemEntity = $this->getFilteredEntitiesOfRepository($this->container->get('order_line_item.repository'), 'orderId', $orderID, $context);
         $lineItemArray = [];
         $i = 0;
-        foreach($lineItemEntity as $lineItem)
-        {
+        foreach ($lineItemEntity as $lineItem) {
             $lineItemArray[$i] = $lineItem;
             $i++;
         }
@@ -166,7 +168,7 @@ class OrderInterfaceUtils
     public function getDeliveryAddress(string $orderID, string $eMailAddress, Context $context): array
     {
         /** @var EntitySearchResult $addressEntity */
-        $addressEntity = $this->getFilteredEntitiesOfRepository($this->container->get('order_address.repository'),'orderId',$orderID,$context);
+        $addressEntity = $this->getFilteredEntitiesOfRepository($this->container->get('order_address.repository'), 'orderId', $orderID, $context);
 
         /** @var OrderAddressEntity $deliverAddressEntity */
         $deliverAddressEntity;
@@ -176,9 +178,7 @@ class OrderInterfaceUtils
         {
             $customerAddressEntity = $addressEntity->first();
             $deliverAddressEntity = $addressEntity->first();
-        }
-        else
-        {// if array is 2 long, the first entry is customer, 2nd entry is delivery address
+        } else { // if array is 2 long, the first entry is customer, 2nd entry is delivery address
             $customerAddressEntity = $addressEntity->first();
             $deliverAddressEntity = $addressEntity->last();
         }
@@ -201,12 +201,12 @@ class OrderInterfaceUtils
     }
 
     /* Returns the ISO Alpha value of countryID */
-    private function getCountryISOalpha2(string $countryID):string
+    private function getCountryISOalpha2(string $countryID): string
     {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('id', $countryID));
         /** @var CountryEntity $countryEntity */
-        $countryEntity = $this->container->get('country.repository')->search($criteria,Context::createDefaultContext())->first();
+        $countryEntity = $this->container->get('country.repository')->search($criteria, Context::createDefaultContext())->first();
         return $countryEntity->getIso();
     }
 
@@ -214,7 +214,7 @@ class OrderInterfaceUtils
     public function updateTrackingNumbers($orderDeliveryRepository, $orderDeliveryID, $trackingnumbers, $context)
     {
         $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter("id",$orderDeliveryID));
+        $criteria->addFilter(new EqualsFilter("id", $orderDeliveryID));
 
         /** @var EntitySearchResult $searchResult */
         $searchResult = $orderDeliveryRepository->search($criteria, $context);
@@ -223,16 +223,17 @@ class OrderInterfaceUtils
 
         $currentTrackingnumbers = $orderDeliveryEntity->getTrackingCodes();
 
-        foreach($trackingnumbers as $value){
-            if(!in_array($value, $currentTrackingnumbers, true)){
+        foreach ($trackingnumbers as $value) {
+            if (!in_array($value, $currentTrackingnumbers, true)) {
                 array_push($currentTrackingnumbers, $value);
             }
         }
-        $orderDeliveryRepository->update([
-                                             [ 'id' => $orderDeliveryID, 'trackingCodes' => $currentTrackingnumbers ],
-                                         ],
-                                         $context);
-
+        $orderDeliveryRepository->update(
+            [
+                ['id' => $orderDeliveryID, 'trackingCodes' => $currentTrackingnumbers],
+            ],
+            $context
+        );
     }
 
     /* Updates stock according to logistics partner response */
@@ -243,18 +244,18 @@ class OrderInterfaceUtils
 
         /** @var ProductEntity $productEntity */
         $productEntity = $this->getFilteredEntitiesOfRepository($productRepository, 'productNumber', $productNumber, $context)->first();
-        if($productEntity == null)
+        if ($productEntity == null)
             return;
         $currentStock = $productEntity->getStock();
         $newStockValue = $currentStock + intval($availableStockAddition);
 
         $productRepository->update(
             [
-                [ 'id' => $productEntity->getId(), 'stock' => $newStockValue ],
+                ['id' => $productEntity->getId(), 'stock' => $newStockValue],
             ],
             $context
         );
-    }    
+    }
 
     /* */
     public function updateQSStock(array $lineContents, string $productNumber, Context $context)
@@ -263,28 +264,28 @@ class OrderInterfaceUtils
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
         /** @var ProductEntity $product */
         $product = $this->getFilteredEntitiesOfRepository($this->container->get('product.repository'), 'productNumber', $productNumber, $context)->first();
-        if($product == null)
+        if ($product == null)
             return;
 
         /** @var EntitySearchResult $searchResult */
         $searchResult = $this->getFilteredEntitiesOfRepository($stockQSRepository, 'productId', $product->getId(), $context);
-            
-        if(count($searchResult) == 0)
-        {
+
+        if (count($searchResult) == 0) {
             // generate new entry
-            $stockQSRepository->create([
-                ['productId' => $product->getId(), 
-                'faulty' => intval($lineContents[8]), 
-                'clarification' => intval($lineContents[9]), 
-                'postprocessing' => intval($lineContents[10]), 
-                'other' => intval($lineContents[11])],
-            ],
+            $stockQSRepository->create(
+                [
+                    [
+                        'productId' => $product->getId(),
+                        'faulty' => intval($lineContents[8]),
+                        'clarification' => intval($lineContents[9]),
+                        'postprocessing' => intval($lineContents[10]),
+                        'other' => intval($lineContents[11])
+                    ],
+                ],
                 $context
             );
             return;
-        }
-        else
-        {
+        } else {
             // update entry
             $entry = $searchResult->first();
 
@@ -294,15 +295,18 @@ class OrderInterfaceUtils
             $clarification = $stockQSEntity->getClarification();
             $postprocessing = $stockQSEntity->getPostprocessing();
             $other = $stockQSEntity->getOther();
-            
-            $stockQSRepository->update([
-                ['id' => $entry->getId(), 
-                'productId' => $product->getId(), 
-                'faulty' => intval($lineContents[8]) + $faulty, 
-                'clarification' => intval($lineContents[9]) + $clarification, 
-                'postprocessing' => intval($lineContents[10]) + $postprocessing, 
-                'other' => intval($lineContents[11]) + $other],
-            ],
+
+            $stockQSRepository->update(
+                [
+                    [
+                        'id' => $entry->getId(),
+                        'productId' => $product->getId(),
+                        'faulty' => intval($lineContents[8]) + $faulty,
+                        'clarification' => intval($lineContents[9]) + $clarification,
+                        'postprocessing' => intval($lineContents[10]) + $postprocessing,
+                        'other' => intval($lineContents[11]) + $other
+                    ],
+                ],
                 $context
             );
         }
@@ -315,14 +319,16 @@ class OrderInterfaceUtils
         /** @var DispoControlDataEntity $entity*/
         $entity = $this->getFilteredEntitiesOfRepository($asDispoDataRepository, 'productNumber', $productNumber, $context)->first();
 
-        if(count($entity) == 0 || $amount == 0)
+        if (count($entity) == 0 || $amount == 0)
             return;
 
         $asDispoDataRepository->update([
-            ['id' => $entity->getId(), 
-            'incoming' => $entity->getIncoming()-$amount],
+            [
+                'id' => $entity->getId(),
+                'incoming' => $entity->getIncoming() - $amount
+            ],
         ], $context);
-    } 
+    }
 
     public function updateQSStockBS(int $faulty, int $postprocessing, int $other, int $clarification, ProductEntity $productEntity, Context $context)
     {
@@ -334,41 +340,43 @@ class OrderInterfaceUtils
         /** @var EntitySearchResult $searchResult */
         $searchResult = $this->getFilteredEntitiesOfRepository($stockQSRepository, 'productId', $productID, $context);
 
-        if(count($searchResult) == 0)
-        {
+        if (count($searchResult) == 0) {
             // generate new entry
             $stockQSRepository->create([
-                ['productId' => $productID, 
-                'faulty' => $faulty, 
-                'clarification' => $clarification, 
-                'postprocessing' => $postprocessing, 
-                'other' => $other],
+                [
+                    'productId' => $productID,
+                    'faulty' => $faulty,
+                    'clarification' => $clarification,
+                    'postprocessing' => $postprocessing,
+                    'other' => $other
+                ],
             ], $context);
             return;
-        }
-        else
-        {
+        } else {
             /** @var OrderInterfaceStockQSEntity $stockQSEntity */
             $stockQSEntity = $searchResult->first();
             $currentFaulty = $stockQSEntity->getFaulty();
             $currentClarification = $stockQSEntity->getClarification();
             $currentPostprocessing = $stockQSEntity->getPostprocessing();
             $currentOther = $stockQSEntity->getOther();
-            
-            $stockQSRepository->update([
-                ['id' => $stockQSEntity->getId(), 
-                'productId' => $productID, 
-                'faulty' => $currentFaulty + $faulty, 
-                'clarification' => $currentClarification + $clarification, 
-                'postprocessing' => $currentPostprocessing + $postprocessing, 
-                'other' => $currentOther + $other],
-            ],
+
+            $stockQSRepository->update(
+                [
+                    [
+                        'id' => $stockQSEntity->getId(),
+                        'productId' => $productID,
+                        'faulty' => $currentFaulty + $faulty,
+                        'clarification' => $currentClarification + $clarification,
+                        'postprocessing' => $currentPostprocessing + $postprocessing,
+                        'other' => $currentOther + $other
+                    ],
+                ],
                 $context
             );
         }
     }
 
-    public function processQSK(string $productNumber, int $faulty, int $clarification, int $postprocessing, int $other, int $stock ,Context $context)
+    public function processQSK(string $productNumber, int $faulty, int $clarification, int $postprocessing, int $other, int $stock, Context $context)
     {
         /** @var EntityRepositoryInterface $stockQSRepository */
         $stockQSRepository = $this->container->get('as_stock_qs.repository');
@@ -379,50 +387,51 @@ class OrderInterfaceUtils
         /** @var OrderInterfaceStockQSEntity $stockQSEntity */
         $stockQSEntity = $this->getFilteredEntitiesOfRepository($stockQSRepository, 'productId', $product->getId(), $context)->first();
 
-        if($stockQSEntity == null)
-        {
-            if($faulty < 0 || $clarification < 0 || $postprocessing < 0 || $other < 0)
-            {
-                $this->sendErrorNotification('QSK error','major error, check logs.<br>A new stock qs entry tried to be created with negative values.', [''], false);
+        if ($stockQSEntity == null) {
+            if ($faulty < 0 || $clarification < 0 || $postprocessing < 0 || $other < 0) {
+                $this->sendErrorNotification('QSK error', 'major error, check logs.<br>A new stock qs entry tried to be created with negative values.', [''], false);
                 return;
             }
             $stockQSRepository->create([
-                ['productId' => $product->getId(), 
-                'faulty' => $faulty, 
-                'clarification' => $clarification, 
-                'postprocessing' => $postprocessing, 
-                'other' => $other],
+                [
+                    'productId' => $product->getId(),
+                    'faulty' => $faulty,
+                    'clarification' => $clarification,
+                    'postprocessing' => $postprocessing,
+                    'other' => $other
+                ],
             ], $context);
-        }
-        else
-        {
+        } else {
             $currentFaulty = $stockQSEntity->getFaulty();
             $currentClarification = $stockQSEntity->getClarification();
             $currentPostprocessing = $stockQSEntity->getPostprocessing();
             $currentOther = $stockQSEntity->getOther();
 
             $stockQSRepository->update([
-                ['id' => $stockQSEntity->getId(), 
-                'faulty' => $currentFaulty + $faulty, 
-                'clarification' => $currentClarification + $clarification, 
-                'postprocessing' => $currentPostprocessing + $postprocessing, 
-                'other' => $currentOther + $other],
+                [
+                    'id' => $stockQSEntity->getId(),
+                    'faulty' => $currentFaulty + $faulty,
+                    'clarification' => $currentClarification + $clarification,
+                    'postprocessing' => $currentPostprocessing + $postprocessing,
+                    'other' => $currentOther + $other
+                ],
             ], $context);
 
-            
+
 
             $currentStock = $product->getStock();
             $newStockValue = $currentStock + $stock;
             $productRepository->update(
                 [
-                    [ 'id' => $product->getId(), 
-                    'stock' => $newStockValue ],
+                    [
+                        'id' => $product->getId(),
+                        'stock' => $newStockValue
+                    ],
                 ],
                 $context
             );
-            if($newStockValue < 0)
-            {
-                $this->sendErrorNotification('QSK error','New stockvalue is below 0, check logs and data' . $product->getProductNumber(),[''], false);
+            if ($newStockValue < 0) {
+                $this->sendErrorNotification('QSK error', 'New stockvalue is below 0, check logs and data' . $product->getProductNumber(), [''], false);
             }
         }
     }
@@ -432,22 +441,20 @@ class OrderInterfaceUtils
     {
         $notificationSalesChannel = $this->systemConfigService->get('ASOrderInterface.config.fallbackSaleschannelNotification');
 
-        if($critical){
+        if ($critical) {
             $recipientList = $this->systemConfigService->get('ASOrderInterface.config.systemErrorNotificationRecipients');
-        }else{
+        } else {
             $recipientList = $this->systemConfigService->get('ASOrderInterface.config.errorNotificationRecipients');
         }
-        
+
         $recipientData = explode(';', $recipientList);
         $recipients = null;
-        for ($i = 0; $i< count($recipientData); $i +=2 )
-        {
+        for ($i = 0; $i < count($recipientData); $i += 2) {
             $recipientName = $recipientData[$i];
-            $recipientAddress = $recipientData[$i+1];
+            $recipientAddress = $recipientData[$i + 1];
 
             $mailCheck = explode('@', $recipientAddress);
-            if(count($mailCheck) != 2)
-            {
+            if (count($mailCheck) != 2) {
                 continue;
             }
             $recipients[$recipientAddress] = $recipientName;
@@ -458,17 +465,17 @@ class OrderInterfaceUtils
 
     public function isMyScheduledTaskCk(string $taskName): bool
     {
-        if($taskName == 'as.scheduled_order_transfer_task')
+        if ($taskName == 'as.scheduled_order_transfer_task')
             return true;
-        if($taskName == 'as.scheduled_order_process_article_error')
+        if ($taskName == 'as.scheduled_order_process_article_error')
             return true;
-        if($taskName == 'as.scheduled_order_process_rmwa')
+        if ($taskName == 'as.scheduled_order_process_rmwa')
             return true;
-        if($taskName == 'as.scheduled_order_process_rmwe')
+        if ($taskName == 'as.scheduled_order_process_rmwe')
             return true;
-        if($taskName == 'as.scheduled_order_process_stock_feedback')
+        if ($taskName == 'as.scheduled_order_process_stock_feedback')
             return true;
-    
+
         return false;
     }
 
@@ -476,66 +483,61 @@ class OrderInterfaceUtils
     public function deleteFiles($dir)
     {
         $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
-        $files = new RecursiveIteratorIterator($it,
-                RecursiveIteratorIterator::CHILD_FIRST);
-        foreach($files as $file) 
-        {
-            if ($file->isDir())
-            {
+        $files = new RecursiveIteratorIterator(
+            $it,
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($files as $file) {
+            if ($file->isDir()) {
                 rmdir($file->getRealPath());
-            }
-            else 
-            {
+            } else {
                 unlink($file->getRealPath());
             }
         }
         rmdir($dir);
     }
     /* Deletes recursive every file and folder in given path. So... be careful which path gets passed to this function */
-    public function archiveFiles($dir,$delete,string $from)
+    public function archiveFiles($dir, $delete, string $from)
     {
-        if(!$delete)
-        {
+        if (!$delete) {
             $archivePath = $this->folderRoot . "Archive/${from}";
             $files = scandir($dir);
-            if ($files != 0)
-            {
-                $this->createTodaysFolderPath($archivePath,$timeStamp);
-                $archivePath = $archivePath . $timeStamp . '/'; 
+            if ($files != 0) {
+                $this->createTodaysFolderPath($archivePath, $timeStamp);
+                $archivePath = $archivePath . $timeStamp . '/';
                 if (!file_exists($archivePath)) {
                     mkdir($archivePath, 0777, true);
                 }
-                for($i = 2; $i < count($files); $i++)
-                {
-                    $source = $dir . $files[$i]; 
-                    $dest = $archivePath . $files[$i]; 
+                for ($i = 2; $i < count($files); $i++) {
+                    $source = $dir . $files[$i];
+                    $dest = $archivePath . $files[$i];
                     // $this->sendErrorNotification("Archive Files from ${from}","Copying from: ${source}<br>To:${dest}",['']);
-                    copy($source,$dest);
+                    copy($source, $dest);
                 }
-            }            
+            }
         }
         // $this->sendErrorNotification("Archive Files from ${from}","Deleting: ${dir}",['']);
-        $this->deleteFiles($dir);   
-        $this->tidyUpArchive($this->folderRoot . 'Archive');  
+        $this->deleteFiles($dir);
+        $this->tidyUpArchive($this->folderRoot . 'Archive');
     }
 
     public function getAllEntitiesOfRepository(EntityRepositoryInterface $repository, Context $context): ?EntitySearchResult
-    {   
+    {
         /** @var Criteria $criteria */
         $criteria = new Criteria();
         /** @var EntitySearchResult $result */
-        $result = $repository->search($criteria,$context);
+        $result = $repository->search($criteria, $context);
 
         return $result;
     }
 
     public function getFilteredEntitiesOfRepository(EntityRepositoryInterface $repository, string $fieldName, $fieldValue, Context $context): ?EntitySearchResult
-    {   
+    {
         /** @var Criteria $criteria */
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter($fieldName, $fieldValue));
         /** @var EntitySearchResult $result */
-        $result = $repository->search($criteria,$context);
+        $result = $repository->search($criteria, $context);
 
         return $result;
     }
@@ -548,7 +550,7 @@ class OrderInterfaceUtils
 
         /** @var EntitySearchResult $searchResult */
         $searchResult = $repository->search($criteria, $context);
-        
+
         return count($searchResult) != 0 ? true : false;
     }
     public function tidyUpArchive($path)
@@ -561,28 +563,28 @@ class OrderInterfaceUtils
     {
         $file = '';
         $remove = false;
-        $empty=true;
-        foreach (glob($path.DIRECTORY_SEPARATOR."*") as $file) {
+        $empty = true;
+        foreach (glob($path . DIRECTORY_SEPARATOR . "*") as $file) {
             $empty &= is_dir($file) && $this->deleteEmptyFolders($file);
         }
-        if($empty)
+        if ($empty)
             $remove = true;
-        if($this->isBaseFolder($path))
+        if ($this->isBaseFolder($path))
             $remove = false;
-        if($remove)
+        if ($remove)
             rmdir($path);
 
         return $remove;
     }
     private function isBaseFolder($file): bool
     {
-        if($file == '')
+        if ($file == '')
             return false;
 
         $fileExploded = explode('/', $file);
-        $fileName = $fileExploded[count($fileExploded)-1];
+        $fileName = $fileExploded[count($fileExploded) - 1];
 
-        if(
+        if (
             $fileName == 'SubmittedOrders' ||
             $fileName == 'Articlebase' ||
             $fileName == 'ReceivedStatusReply' ||
@@ -590,8 +592,7 @@ class OrderInterfaceUtils
             $fileName == 'RM_WA' ||
             $fileName == 'Bestand' ||
             $fileName == 'Artikel_Error'
-        )
-        {
+        ) {
             return true;
         }
         return false;

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace ASOrderInterface\Core\Api\Utilities;
 
@@ -10,6 +12,7 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
 Establishes a secure file transfer protocoll connection to the server defined in the plugins configuration in shopware administration frontend
 
 */
+
 class SFTPController
 {
     /** @var SystemConfigService $systemConfigService */
@@ -44,21 +47,20 @@ class SFTPController
 
     public function init()
     {
-        
     }
 
     /* Opens the connection to the $host via $port */
     private function openConnection(): bool
     {
         $this->connection = ssh2_connect($this->host, intval($this->port));
-        if (! $this->connection) {
+        if (!$this->connection) {
             return false;
         }
         return true;
     }
 
     /* Authentificates on the opened connection */
-    private function authConnection():bool
+    private function authConnection(): bool
     {
         $authentificationSuccessful = ssh2_auth_password($this->connection, $this->username, $this->password);
         return $authentificationSuccessful;
@@ -67,8 +69,8 @@ class SFTPController
     /* Writes local file on remote sFTP server */
     public function pushFile(string $originPath, string $destinationPath)
     {
-        if ($this->openConnection()) {//connected
-            if ($this->authConnection()) {//authenticated
+        if ($this->openConnection()) { //connected
+            if ($this->authConnection()) { //authenticated
                 $sftp = ssh2_sftp($this->connection);
                 $stream = fopen('ssh2.sftp://' . intval($sftp) . $this->homeDirectory . $destinationPath, 'w');
                 $file = file_get_contents($originPath);
@@ -84,26 +86,23 @@ class SFTPController
         if (!function_exists("ssh2_connect")) {
             throw new Exception('Function ssh2_connect not found, you cannot use ssh2 here.');
         }
-        
-        if(!$connection = ssh2_connect($this->host, intval($this->port)))
-        {
+
+        if (!$connection = ssh2_connect($this->host, intval($this->port))) {
             throw new Exception('Unable to connect.');
         }
 
-        if (!ssh2_auth_password($connection, $this->username, $this->password)) 
-        {
+        if (!ssh2_auth_password($connection, $this->username, $this->password)) {
             throw new Exception('Unable to authenticate.');
         }
 
-        if (!$stream = ssh2_sftp($connection)) 
-        {
+        if (!$stream = ssh2_sftp($connection)) {
             throw new Exception('Unable to create a stream.');
         }
 
         if (!$dir = opendir('ssh2.sftp://' . intval($stream) . $this->homeDirectory . $remoteDir)) {
             throw new Exception('Could not open the directory.');
         }
-        
+
         $files = array();
         while (false !== ($file = readdir($dir))) {
             if ($file == "." || $file == "..") {
@@ -111,10 +110,10 @@ class SFTPController
             }
             $files[] = $file;
         }
-        
+
         foreach ($files as $file) {
             // echo "Copying file: $file\n";
-            
+
             if (!$remote = @fopen('ssh2.sftp://' . intval($stream) . $this->homeDirectory . $remoteDir . '/' . $file, 'r')) {
                 throw new Exception("Unable to open remote file: $file");
                 continue;
@@ -136,7 +135,7 @@ class SFTPController
             }
             fclose($local);
             ssh2_sftp_unlink($stream, $this->homeDirectory . $remoteDir . '/' . $file);
-            fclose($remote);            
+            fclose($remote);
         }
         closedir($dir);
     }

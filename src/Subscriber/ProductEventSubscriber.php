@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace ASOrderInterface\Subscriber;
 
@@ -15,9 +17,10 @@ class ProductEventSubscriber implements EventSubscriberInterface
     /** @var OrderInterfaceController $asOrderInterfaceController */
     private $asOrderInterfaceController;
 
-    public function __construct(SystemConfigService $systemConfigService,
-                                OrderInterfaceController $asOrderInterfaceController)
-    {
+    public function __construct(
+        SystemConfigService $systemConfigService,
+        OrderInterfaceController $asOrderInterfaceController
+    ) {
         $this->systemConfigService = $systemConfigService;
         $this->asOrderInterfaceController = $asOrderInterfaceController;
     }

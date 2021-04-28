@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace ASOrderInterface\ScheduledTask;
 
@@ -12,7 +14,7 @@ class ScheduledOrderTransferTaskHandler extends ScheduledTaskHandler
 {
     /** @var OrderInterfaceController $interfaceController */
     private $interfaceController;
-    
+
     public function __construct(EntityRepositoryInterface $scheduledTaskRepository, OrderInterfaceController $interfaceController)
     {
         $this->interfaceController = $interfaceController;
@@ -21,11 +23,11 @@ class ScheduledOrderTransferTaskHandler extends ScheduledTaskHandler
 
     public static function getHandledMessages(): iterable
     {
-        return [ ScheduledOrderTransferTask::class ];
+        return [ScheduledOrderTransferTask::class];
     }
 
     public function run(): void
     {
         $this->interfaceController->submitOrders(Context::createDefaultContext());
-    }    
+    }
 }

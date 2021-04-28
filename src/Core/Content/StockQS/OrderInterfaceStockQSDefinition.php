@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace ASOrderInterface\Core\Content\StockQS;
 
@@ -32,14 +34,14 @@ class OrderInterfaceStockQSDefinition extends EntityDefinition
     {
         return new FieldCollection(
             [
-                (new IdField('id','id'))->addFlags(new Required(), new PrimaryKey()),
-                new StringField('product_name','productName'),
-                new StringField('product_number','productNumber'),
-                new StringField('product_id','productId'),
-                new IntField('faulty','faulty'),
-                new IntField('clarification','clarification'),
-                new IntField('postprocessing','postprocessing'),
-                new IntField('other','other')
+                (new IdField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
+                new StringField('product_name', 'productName'),
+                new StringField('product_number', 'productNumber'),
+                new StringField('product_id', 'productId'),
+                new IntField('faulty', 'faulty'),
+                new IntField('clarification', 'clarification'),
+                new IntField('postprocessing', 'postprocessing'),
+                new IntField('other', 'other')
             ]
         );
     }

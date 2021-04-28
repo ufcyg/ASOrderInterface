@@ -1,4 +1,7 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
+
 namespace ASOrderInterface\Core\Api\Utilities;
 
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
@@ -14,6 +17,7 @@ To prevent overloaded classes and preserve clarity the functionality to change t
 has been moved to its own class.
 
 */
+
 class OIOrderServiceUtils
 {
     /** @var OrderService $orderService */
@@ -26,128 +30,113 @@ class OIOrderServiceUtils
 
     //process, complete, cancel, reopen
     public function updateOrderStatus(OrderEntity $order, string $entityID, $transition)
-    {   
+    {
         $stateName = $order->getStateMachineState()->getTechnicalName();
-        switch ($stateName)
-        {
+        switch ($stateName) {
             case "open":
-                if(!(strcmp($transition,'cancel') == 0 || strcmp($transition,'process') == 0))
-                {
+                if (!(strcmp($transition, 'cancel') == 0 || strcmp($transition, 'process') == 0)) {
                     return false;
                 }
-            break;
+                break;
 
             case "in_progress":
-                if(!(strcmp($transition,'cancel') == 0 || strcmp($transition,'complete') == 0))
-                {
+                if (!(strcmp($transition, 'cancel') == 0 || strcmp($transition, 'complete') == 0)) {
                     return false;
                 }
-            break;
+                break;
 
-            case "completed": 
-                if(!(strcmp($transition,'reopen') == 0))
-                {
+            case "completed":
+                if (!(strcmp($transition, 'reopen') == 0)) {
                     return false;
                 }
-            break;
+                break;
 
             case "cancelled":
-                if(!(strcmp($transition,'reopen') == 0))
-                {
+                if (!(strcmp($transition, 'reopen') == 0)) {
                     return false;
                 }
-            break;
+                break;
         }
-        $this->orderService->orderStateTransition($entityID, $transition, new ParameterBag([]),Context::createDefaultContext());
+        $this->orderService->orderStateTransition($entityID, $transition, new ParameterBag([]), Context::createDefaultContext());
         return true;
     }
 
     //ship, ship_partially, retour, retour_partially, cancel, reopen
-    public function updateOrderDeliveryStatus(OrderDeliveryEntity $orderDelivery,string $entityID, string $transition): bool
+    public function updateOrderDeliveryStatus(OrderDeliveryEntity $orderDelivery, string $entityID, string $transition): bool
     {
-        switch ($orderDelivery->getStateMachineState()->getTechnicalName())
-        {
+        switch ($orderDelivery->getStateMachineState()->getTechnicalName()) {
             case "open":
-                if(!(strcmp($transition,'cancel') == 0 || strcmp($transition,'ship') == 0 || strcmp($transition,'ship_partially') == 0))
-                {
+                if (!(strcmp($transition, 'cancel') == 0 || strcmp($transition, 'ship') == 0 || strcmp($transition, 'ship_partially') == 0)) {
                     return false;
                 }
-            break;
+                break;
 
             case "shipped":
-                if(!(strcmp($transition,'cancel') == 0 || strcmp($transition,'retour') == 0 || strcmp($transition,'retour_partially') == 0))
-                {
+                if (!(strcmp($transition, 'cancel') == 0 || strcmp($transition, 'retour') == 0 || strcmp($transition, 'retour_partially') == 0)) {
                     return false;
                 }
-            break;
+                break;
 
-            case "shipped_partially": 
-                if(!(strcmp($transition,'cancel') == 0 || strcmp($transition,'retour') == 0 || strcmp($transition,'retour_partially') == 0 || strcmp($transition,'ship') == 0))
-                {
+            case "shipped_partially":
+                if (!(strcmp($transition, 'cancel') == 0 || strcmp($transition, 'retour') == 0 || strcmp($transition, 'retour_partially') == 0 || strcmp($transition, 'ship') == 0)) {
                     return false;
                 }
-            break;
+                break;
 
             case "refunded_partially":
                 return false;
-            break;
+                break;
 
             case "returned":
                 return false;
-            break;
+                break;
 
             case "cancelled":
-                if(!(strcmp($transition,'reopen') == 0))
-                {
+                if (!(strcmp($transition, 'reopen') == 0)) {
                     return false;
                 }
-            break;
+                break;
         }
-        $this->orderService->orderDeliveryStateTransition($entityID, $transition, new ParameterBag([]),Context::createDefaultContext());
+        $this->orderService->orderDeliveryStateTransition($entityID, $transition, new ParameterBag([]), Context::createDefaultContext());
         return true;
     }
 
-    public function updatePaymentStatus(OrderTransactionEntity $transaction, string $entityID, $transition) {   
+    public function updatePaymentStatus(OrderTransactionEntity $transaction, string $entityID, $transition)
+    {
         $stateName = $transaction->getStateMachineState()->getTechnicalName();
-        switch ($stateName)
-        {
+        switch ($stateName) {
             case "open":
-                if(!(strcmp($transition,'pay') == 0 || strcmp($transition,'remind') == 0 || strcmp($transition,'pay_partially') == 0 || strcmp($transition,'cancel') == 0))
-                {
-                    
+                if (!(strcmp($transition, 'pay') == 0 || strcmp($transition, 'remind') == 0 || strcmp($transition, 'pay_partially') == 0 || strcmp($transition, 'cancel') == 0)) {
+
                     return false;
                 }
-            break;
-            
+                break;
+
             case "paid_partially":
-                if(!(strcmp($transition,'refund_partially') == 0 || strcmp($transition,'refund') == 0 || strcmp($transition,'remind') == 0 || strcmp($transition,'pay') == 0))
-                {
+                if (!(strcmp($transition, 'refund_partially') == 0 || strcmp($transition, 'refund') == 0 || strcmp($transition, 'remind') == 0 || strcmp($transition, 'pay') == 0)) {
                     return false;
                 }
-            break;
-            
+                break;
+
             case "reminded":
-                if(!(strcmp($transition,'pay') == 0 || strcmp($transition,'pay_partially') == 0))
-                {
+                if (!(strcmp($transition, 'pay') == 0 || strcmp($transition, 'pay_partially') == 0)) {
                     return false;
                 }
-            break;
-            
+                break;
+
             case "paid":
-                if(!(strcmp($transition,'refund_partially') == 0 || strcmp($transition,'refund') == 0 ))
-                {
+                if (!(strcmp($transition, 'refund_partially') == 0 || strcmp($transition, 'refund') == 0)) {
                     return false;
                 }
-            break;
-            
+                break;
+
             case "refunded_partially":
-                if(!(strcmp($transition,'refund') == 0))
-                {
+                if (!(strcmp($transition, 'refund') == 0)) {
                     return false;
                 }
-            break;
+                break;
         }
-        $this->orderService->orderTransactionStateTransition($entityID, $transition, new ParameterBag([]),Context::createDefaultContext());
+        $this->orderService->orderTransactionStateTransition($entityID, $transition, new ParameterBag([]), Context::createDefaultContext());
         return true;
     }
 }

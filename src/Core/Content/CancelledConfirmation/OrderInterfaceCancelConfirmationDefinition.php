@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace ASOrderInterface\Core\Content\CancelledConfirmation;
 
@@ -31,8 +33,8 @@ class OrderInterfaceCancelConfirmationDefinition extends EntityDefinition
     {
         return new FieldCollection(
             [
-                (new IdField('id','id'))->addFlags(new Required(), new PrimaryKey()),
-                new StringField('order_id','orderId')
+                (new IdField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
+                new StringField('order_id', 'orderId')
             ]
         );
     }
