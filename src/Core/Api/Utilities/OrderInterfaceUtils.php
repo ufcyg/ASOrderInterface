@@ -316,12 +316,12 @@ class OrderInterfaceUtils
     {
         /** @var EntityRepositoryInterface $asDispoDataRepository */
         $asDispoDataRepository = $this->container->get('as_dispo_control_data.repository');
-        /** @var DispoControlDataEntity $entity*/
-        $entity = $this->getFilteredEntitiesOfRepository($asDispoDataRepository, 'productNumber', $productNumber, $context)->first();
+        /** @var EntitySearchResult $entity*/
+        $entities = $this->getFilteredEntitiesOfRepository($asDispoDataRepository, 'productNumber', $productNumber, $context);
 
-        if (count($entity) == 0 || $amount == 0)
+        if (count($entities) == 0 || $amount == 0)
             return;
-
+        $entity = $entities->first();
         $asDispoDataRepository->update([
             [
                 'id' => $entity->getId(),
