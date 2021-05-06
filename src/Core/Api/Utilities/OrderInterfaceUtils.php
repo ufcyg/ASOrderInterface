@@ -439,8 +439,6 @@ class OrderInterfaceUtils
     /* Sends an eMail to every entry in the plugin configuration inside the administration frontend */
     public function sendErrorNotification(string $errorSubject, string $errorMessage, array $fileArray, bool $critical)
     {
-        $notificationSalesChannel = $this->systemConfigService->get('ASOrderInterface.config.fallbackSaleschannelNotification');
-
         if ($critical) {
             $recipientList = $this->systemConfigService->get('ASOrderInterface.config.systemErrorNotificationRecipients');
         } else {
@@ -460,7 +458,7 @@ class OrderInterfaceUtils
             $recipients[$recipientAddress] = $recipientName;
         }
 
-        $this->mailServiceHelper->sendMyMail($recipients, $notificationSalesChannel, $this->senderName, $errorSubject, $errorMessage, $errorMessage, $fileArray);
+        $this->mailServiceHelper->sendMyMail($recipients, null, $this->senderName, $errorSubject, $errorMessage, $errorMessage, $fileArray);
     }
 
     public function isMyScheduledTaskCk(string $taskName): bool

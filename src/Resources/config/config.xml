@@ -97,12 +97,6 @@
             <helpText>Input as many recipients as needed in valid formation: NAME DELIMITER(;) MAIL</helpText>
             <helpText lang="de-DE">Geben Sie beliebig viele Empfänger für Fehlerbenachrichtigungen in valider Form ein: NAME TRENNZEICHEN(;) MAILADRESSE.</helpText>
         </input-field>
-
-        <component name="sw-entity-single-select">
-            <name>fallbackSaleschannelNotification</name>
-            <entity>sales_channel</entity>
-            <label>Choose a fallback sales channel as origin for notifications if no other sales channel is known</label>
-        </component>
     </card>
     <card>
         <title>Plugin Path</title>
@@ -111,7 +105,7 @@
             <name>workingDirectory</name>
             <label>Enter the path to your plugin here</label>
             <label lang="de-DE">Tragen Sie hier das Arbeitsverzeichnis ein</label>          
-            <placeholder>/home/www/b90/server81login-server/_zpmv-pmo.de/public/</placeholder>
+            <placeholder>/home/www/b90/server81login-server/_zpmv-pmo.de/custom/plugins/ASOrderInterface/InterfaceData/</placeholder>
             <helpText>Full path of the public folder in your shopware installation</helpText>
             <helpText lang="de-DE">Vollständigen Pfad zum public Ordner Ihrer Shopware installation</helpText>
         </input-field>
