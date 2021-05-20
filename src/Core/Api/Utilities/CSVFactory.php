@@ -244,14 +244,14 @@ class CSVFactory
         $csvString  .= $this->truncateString($placeholder, 30) . ';';                                                                 //Referenz 3 30
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[firstNameCustomer]'), 35) . ';';   //Name 1, Kunde 35
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[lastNameCustomer]'), 35) . ';';    //Name 2, Kunde 35
-        $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[company]'), 35) . ';';                                                                 //Name 3, Kunde 35
+        $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[company]'), 35) . ';';             //Name 3, Kunde 35
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[streetCustomer]'), 45) . ';';      //Straße, Kunde 45
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[zipCodeCustomer]'), 10) . ';';     //PLZ, Kunde 10
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[cityCustomer]'), 35) . ';';        //Ort, Kunde 35
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[countryISOalpha2Customer]'), 3) . ';'; //Land, Kunde 3
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[firstNameDelivery]'), 35) . ';';   //Name 1, Lieferanschrift 35
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[lastNameDelivery]'), 35) . ';';    //Name 2, Lieferanschrift 35
-        $csvString  .= $this->truncateString($placeholder, 35) . ';';                                                                 //Name 3, Lieferanschrift 35
+        $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[company]'), 35) . ';';             //Name 3, Lieferanschrift 35
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[streetDelivery]'), 45) . ';';      //Straße, Lieferanschrift 45
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[zipCodeDelivery]'), 10) . ';';     //PLZ, Lieferanschrift 10
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[cityDelivery]'), 35) . ';';        //Ort, Lieferanschrift 35
@@ -307,7 +307,7 @@ class CSVFactory
 
         return $csvString;
     }
-    
+
     private function getOrderValue(array $associativeArray): string //7.4
     {
         $orderValue = 0;
