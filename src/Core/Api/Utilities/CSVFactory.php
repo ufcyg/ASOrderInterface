@@ -244,7 +244,7 @@ class CSVFactory
         $csvString  .= $this->truncateString($placeholder, 30) . ';';                                                                 //Referenz 3 30
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[firstNameCustomer]'), 35) . ';';   //Name 1, Kunde 35
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[lastNameCustomer]'), 35) . ';';    //Name 2, Kunde 35
-        $csvString  .= $this->truncateString($placeholder, 35) . ';';                                                                 //Name 3, Kunde 35
+        $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[company]'), 35) . ';';                                                                 //Name 3, Kunde 35
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[streetCustomer]'), 45) . ';';      //Straße, Kunde 45
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[zipCodeCustomer]'), 10) . ';';     //PLZ, Kunde 10
         $csvString  .= $this->truncateString($this->properyAccessor->getValue($associativeArray, '[cityCustomer]'), 35) . ';';        //Ort, Kunde 35
@@ -307,11 +307,11 @@ class CSVFactory
 
         return $csvString;
     }
-
+    
     private function getOrderValue(array $associativeArray): string //7.4
     {
         $orderValue = 0;
-        for ($i = 0; $i < count($associativeArray) - 13; $i++) //hardcoded value is equivalent to amount of array entries in "$associativeArray" before products are added
+        for ($i = 0; $i < count($associativeArray) - 14; $i++) //hardcoded value is equivalent to amount of array entries in "$associativeArray" before products are added
         {
             $product = $associativeArray[$i];
             $orderValue += $this->properyAccessor->getValue($product, 'totalPrice');

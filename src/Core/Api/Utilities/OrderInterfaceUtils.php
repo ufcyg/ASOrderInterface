@@ -182,8 +182,10 @@ class OrderInterfaceUtils
             $customerAddressEntity = $addressEntity->first();
             $deliverAddressEntity = $addressEntity->last();
         }
-
+        
+        // if you add or remove values from the $addressArray, the loop range inside getOrderValue() of CSVFactory.php must be adjusted aswell
         return $addressArray = array(
+            'company' => $customerAddressEntity->getCompany(),
             'eMail' => $eMailAddress,
             'firstNameCustomer' => $customerAddressEntity->getFirstName(),
             'lastNameCustomer' => $customerAddressEntity->getLastName(),
